@@ -16,14 +16,20 @@
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
     
     <title>Unearth - Never forget where you put things</title>
-    <link rel="stylesheet" href="style-redesigned.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="light-mode">
     <div id="app">
-        <!-- Header -->
+        <!-- Header with Level Progress -->
         <header class="app-header">
             <div class="header-content">
-                <h1 class="app-title">Unearth</h1>
+                <div class="header-left">
+                    <h1 class="app-title">Unearth</h1>
+                    <div class="level-badge" id="levelBadge">
+                        <span class="level-icon">⭐</span>
+                        <span class="level-number">1</span>
+                    </div>
+                </div>
                 <button id="themeToggle" class="theme-toggle" aria-label="Toggle Dark Mode">
                     <svg class="sun-icon" viewBox="0 0 24 24" width="20" height="20">
                         <circle cx="12" cy="12" r="5" fill="currentColor"/>
@@ -41,6 +47,16 @@
                     </svg>
                 </button>
             </div>
+            <!-- XP Progress Bar -->
+            <div class="xp-progress-container">
+                <div class="xp-progress-bar">
+                    <div class="xp-progress-fill" id="xpProgressFill" style="width: 0%"></div>
+                </div>
+                <div class="xp-label">
+                    <span id="xpCurrent">0</span>/<span id="xpNeeded">100</span> XP
+                    <span class="xp-next">Next: <span id="nextLevelName">Novice</span></span>
+                </div>
+            </div>
         </header>
 
         <!-- Main Screens Container -->
@@ -48,15 +64,45 @@
             
             <!-- HOME SCREEN -->
             <div id="homeScreen" class="screen active">
+                
+                <!-- Daily Challenge Banner -->
+                <div class="daily-challenge-banner" id="dailyChallenge">
+                    <div class="challenge-icon">🎯</div>
+                    <div class="challenge-content">
+                        <div class="challenge-title">Daily Challenge</div>
+                        <div class="challenge-desc" id="challengeDesc">Log 3 items today</div>
+                        <div class="challenge-progress">
+                            <div class="challenge-progress-bar">
+                                <div class="challenge-progress-fill" id="challengeProgressFill" style="width: 0%"></div>
+                            </div>
+                            <span class="challenge-count"><span id="challengeCurrent">0</span>/<span id="challengeTarget">3</span></span>
+                        </div>
+                    </div>
+                    <div class="challenge-reward">+<span id="challengeXP">50</span> XP</div>
+                </div>
+
                 <!-- Quick Stats Bar -->
                 <div class="quick-stats">
                     <div class="stat-pill">
-                        <span class="stat-label">Items</span>
-                        <span class="stat-value" id="totalItems">0</span>
+                        <span class="stat-icon">📦</span>
+                        <div class="stat-content">
+                            <span class="stat-value" id="totalItems">0</span>
+                            <span class="stat-label">Items</span>
+                        </div>
                     </div>
                     <div class="stat-pill">
-                        <span class="stat-label">Logs</span>
-                        <span class="stat-value" id="totalLogs">0</span>
+                        <span class="stat-icon">📝</span>
+                        <div class="stat-content">
+                            <span class="stat-value" id="totalLogs">0</span>
+                            <span class="stat-label">Logs</span>
+                        </div>
+                    </div>
+                    <div class="stat-pill streak-pill">
+                        <span class="stat-icon">🔥</span>
+                        <div class="stat-content">
+                            <span class="stat-value" id="streakCount">0</span>
+                            <span class="stat-label">Day Streak</span>
+                        </div>
                     </div>
                 </div>
 
@@ -78,8 +124,11 @@
                     <div id="emptyState" class="empty-state">
                         <div class="empty-icon">📦</div>
                         <h3>No items yet</h3>
-                        <p>Add items you often misplace or want to store safely</p>
-                        <button class="btn-primary" id="addFirstItem">Add Your First Item</button>
+                        <p>Add your first item to start earning XP and tracking patterns</p>
+                        <button class="btn-primary" id="addFirstItem">
+                            <span>Add Your First Item</span>
+                            <span class="btn-xp">+10 XP</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -109,6 +158,7 @@
                                 <div class="action-title">Found It</div>
                                 <div class="action-desc">Log where you found it</div>
                             </div>
+                            <div class="action-xp">+5 XP</div>
                         </button>
                         
                         <button class="action-btn stored-btn" id="storedItBtn">
@@ -117,6 +167,7 @@
                                 <div class="action-title">Stored It</div>
                                 <div class="action-desc">Remember where you put it</div>
                             </div>
+                            <div class="action-xp">+5 XP</div>
                         </button>
                     </div>
 
@@ -136,36 +187,89 @@
                 </div>
             </div>
 
-            <!-- STATS SCREEN -->
-            <div id="statsScreen" class="screen">
+            <!-- PROGRESS SCREEN (replaces Stats) -->
+            <div id="progressScreen" class="screen">
                 <div class="screen-header">
-                    <h2>Your Stats</h2>
+                    <h2>Your Progress</h2>
+                    <div class="screen-subtitle">Level <span id="progressLevel">1</span> - <span id="progressTitle">Beginner</span></div>
                 </div>
 
-                <div class="stats-content">
-                    <!-- Main Stats -->
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-card-icon">😅</div>
-                            <div class="stat-card-value" id="statsTotal">0</div>
-                            <div class="stat-card-label">Total Logs</div>
+                <div class="progress-content">
+                    
+                    <!-- Level Card -->
+                    <div class="level-card">
+                        <div class="level-card-header">
+                            <div class="level-info">
+                                <div class="level-main">
+                                    <span class="level-icon-large">⭐</span>
+                                    <div>
+                                        <div class="level-number-large">Level <span id="levelNumber">1</span></div>
+                                        <div class="level-title-large" id="levelTitle">Beginner</div>
+                                    </div>
+                                </div>
+                                <div class="level-xp-info">
+                                    <div class="xp-numbers">
+                                        <span class="xp-current-large" id="xpCurrentLarge">0</span>
+                                        <span class="xp-divider">/</span>
+                                        <span class="xp-needed-large" id="xpNeededLarge">100</span>
+                                        <span class="xp-label-small">XP</span>
+                                    </div>
+                                    <div class="xp-bar-large">
+                                        <div class="xp-bar-fill-large" id="xpBarFillLarge" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-card-icon">👑</div>
-                            <div class="stat-card-value" id="statsMostLogged">—</div>
-                            <div class="stat-card-label">Most Logged</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-icon">📍</div>
-                            <div class="stat-card-value" id="statsTopLocation">—</div>
-                            <div class="stat-card-label">Top Location</div>
+                        <div class="level-perks">
+                            <h4>Current Perks</h4>
+                            <div class="perks-list" id="perksList">
+                                <div class="perk-item">✨ Basic tracking enabled</div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Achievements -->
+                    <!-- Achievements Section -->
                     <div class="achievements-section">
-                        <h3>Achievements</h3>
+                        <div class="section-title-row">
+                            <h3>Achievements</h3>
+                            <span class="achievement-counter">
+                                <span id="achievementsEarned">0</span>/<span id="achievementsTotal">12</span>
+                            </span>
+                        </div>
                         <div id="achievementsList" class="achievements-grid"></div>
+                    </div>
+
+                    <!-- Milestones Section -->
+                    <div class="milestones-section">
+                        <h3>Milestones</h3>
+                        <div id="milestonesList" class="milestones-list"></div>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="detailed-stats">
+                        <h3>Statistics</h3>
+                        <div class="stats-grid">
+                            <div class="stat-detail-card">
+                                <div class="stat-detail-icon">📊</div>
+                                <div class="stat-detail-value" id="statsTotal">0</div>
+                                <div class="stat-detail-label">Total Logs</div>
+                            </div>
+                            <div class="stat-detail-card">
+                                <div class="stat-detail-icon">👑</div>
+                                <div class="stat-detail-value" id="statsMostLogged">—</div>
+                                <div class="stat-detail-label">Most Logged</div>
+                            </div>
+                            <div class="stat-detail-card">
+                                <div class="stat-detail-icon">📍</div>
+                                <div class="stat-detail-value" id="statsTopLocation">—</div>
+                                <div class="stat-detail-label">Top Location</div>
+                            </div>
+                            <div class="stat-detail-card">
+                                <div class="stat-detail-icon">🔥</div>
+                                <div class="stat-detail-value" id="statsLongestStreak">0</div>
+                                <div class="stat-detail-label">Best Streak</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -180,11 +284,11 @@
                 </svg>
                 <span>Home</span>
             </button>
-            <button class="nav-btn" data-screen="stats">
+            <button class="nav-btn" data-screen="progress">
                 <svg viewBox="0 0 24 24" width="24" height="24">
-                    <path d="M18 20V10M12 20V4M6 20v-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="none" stroke="currentColor" stroke-width="2"/>
                 </svg>
-                <span>Stats</span>
+                <span>Progress</span>
             </button>
             <button class="nav-btn" id="moreBtn">
                 <svg viewBox="0 0 24 24" width="24" height="24">
@@ -204,6 +308,10 @@
                 <h3 class="modal-title">Add New Item</h3>
                 <p class="modal-subtitle">What do you often lose or want to remember?</p>
                 <input type="text" id="itemNameInput" class="input" placeholder="e.g. Car keys, Passport, Charger" maxlength="50" autocomplete="off">
+                <div class="modal-reward">
+                    <span class="reward-icon">✨</span>
+                    <span>You'll earn <strong>+10 XP</strong> for adding this item</span>
+                </div>
                 <div class="modal-actions">
                     <button id="cancelAddBtn" class="btn-secondary">Cancel</button>
                     <button id="saveItemBtn" class="btn-primary">Add Item</button>
@@ -221,6 +329,11 @@
                 <!-- Quick Location Suggestions -->
                 <div class="quick-locations" id="quickLocations"></div>
                 
+                <div class="modal-reward">
+                    <span class="reward-icon">⭐</span>
+                    <span>Earn <strong>+5 XP</strong> for logging this</span>
+                </div>
+                
                 <div class="modal-actions">
                     <button id="cancelLogBtn" class="btn-secondary">Cancel</button>
                     <button id="saveLogBtn" class="btn-primary">Save</button>
@@ -236,6 +349,43 @@
                 <div class="modal-actions">
                     <button id="cancelDeleteBtn" class="btn-secondary">Cancel</button>
                     <button id="confirmDeleteBtn" class="btn-danger">Delete</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Level Up Modal -->
+        <div id="levelUpModal" class="modal-overlay hidden">
+            <div class="modal level-up-modal">
+                <div class="level-up-animation">
+                    <div class="level-up-icon">🎉</div>
+                    <h2 class="level-up-title">Level Up!</h2>
+                    <div class="level-up-new">
+                        <div class="level-up-badge">
+                            <span class="level-icon-xl">⭐</span>
+                            <span class="level-number-xl" id="newLevelNumber">2</span>
+                        </div>
+                        <div class="level-up-name" id="newLevelName">Novice</div>
+                    </div>
+                    <div class="level-up-perks">
+                        <h4>New Perks Unlocked:</h4>
+                        <ul id="newPerksList"></ul>
+                    </div>
+                    <button id="closeLevelUpBtn" class="btn-primary full-width">Continue</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Achievement Unlocked Modal -->
+        <div id="achievementModal" class="modal-overlay hidden">
+            <div class="modal achievement-modal">
+                <div class="achievement-unlocked">
+                    <div class="achievement-glow"></div>
+                    <div class="achievement-icon-large" id="unlockedAchievementIcon">🏆</div>
+                    <h3 class="achievement-unlock-title">Achievement Unlocked!</h3>
+                    <div class="achievement-unlock-name" id="unlockedAchievementName">First Steps</div>
+                    <div class="achievement-unlock-desc" id="unlockedAchievementDesc">Add your first item</div>
+                    <div class="achievement-unlock-xp">+<span id="unlockedAchievementXP">25</span> XP</div>
+                    <button id="closeAchievementBtn" class="btn-primary">Awesome!</button>
                 </div>
             </div>
         </div>
@@ -257,6 +407,12 @@
                         </svg>
                         <span>Clear All Data</span>
                     </button>
+                    <button class="menu-item" id="resetProgressBtn">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M3 12a9 9 0 019-9 9.75 9.75 0 016.74 2.74M21 12a9 9 0 01-9 9 9.75 9.75 0 01-6.74-2.74M12 3v9l4 2" stroke="currentColor" stroke-width="2" fill="none"/>
+                        </svg>
+                        <span>Reset Progress</span>
+                    </button>
                     <button class="menu-item" id="aboutBtn">
                         <svg viewBox="0 0 24 24" width="24" height="24">
                             <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
@@ -273,8 +429,14 @@
         <div id="toast" class="toast hidden">
             <span id="toastText"></span>
         </div>
+
+        <!-- XP Gain Animation -->
+        <div id="xpGain" class="xp-gain hidden">
+            <span class="xp-gain-icon">⭐</span>
+            <span class="xp-gain-text">+<span id="xpGainAmount">5</span> XP</span>
+        </div>
     </div>
 
-    <script src="app-redesigned.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>

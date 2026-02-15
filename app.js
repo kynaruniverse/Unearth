@@ -1,6 +1,6 @@
 // ============================================
-// UNEARTH APP - REDESIGNED
-// Track lost items & remember safe places
+// UNEARTH - GAMIFIED EXPERIENCE
+// Advanced Level System, XP, Achievements, Streaks
 // ============================================
 
 // ============================================
@@ -11,18 +11,187 @@ let appState = {
     currentItemId: null,
     currentScreen: 'home',
     darkMode: false,
-    currentLogType: null // 'found' or 'stored'
+    currentLogType: null, // 'found' or 'stored'
+    
+    // Gamification State
+    xp: 0,
+    level: 1,
+    streak: 0,
+    lastActiveDate: null,
+    longestStreak: 0,
+    achievements: [],
+    dailyChallenge: {
+        target: 3,
+        current: 0,
+        completed: false,
+        date: null
+    }
 };
+
+// ============================================
+// GAMIFICATION CONSTANTS
+// ============================================
+
+// Level System - XP needed for each level
+const LEVELS = [
+    { level: 1, name: 'Beginner', xpNeeded: 100, perks: ['Basic tracking enabled'] },
+    { level: 2, name: 'Novice', xpNeeded: 250, perks: ['Daily challenges unlocked', 'Streak tracking enabled'] },
+    { level: 3, name: 'Organizer', xpNeeded: 500, perks: ['Advanced statistics', 'Custom tags coming soon'] },
+    { level: 4, name: 'Expert', xpNeeded: 1000, perks: ['Priority support', 'Export features'] },
+    { level: 5, name: 'Master', xpNeeded: 2000, perks: ['All features unlocked', 'Master badge'] },
+    { level: 6, name: 'Legend', xpNeeded: 3500, perks: ['Legend status', 'Exclusive themes'] },
+    { level: 7, name: 'Guru', xpNeeded: 5000, perks: ['Guru badge', 'Beta features access'] },
+    { level: 8, name: 'Champion', xpNeeded: 7500, perks: ['Champion tier', 'Premium icons'] },
+    { level: 9, name: 'Elite', xpNeeded: 10000, perks: ['Elite status', 'Early access to features'] },
+    { level: 10, name: 'Ultimate', xpNeeded: 15000, perks: ['Ultimate rank', 'Everything unlocked!'] }
+];
+
+// XP Rewards
+const XP_REWARDS = {
+    ADD_ITEM: 10,
+    LOG_LOCATION: 5,
+    FIRST_LOG_TODAY: 15,
+    COMPLETE_DAILY_CHALLENGE: 50,
+    MAINTAIN_STREAK: 20,
+    ACHIEVEMENT: 25
+};
+
+// Achievements System
+const ACHIEVEMENTS = [
+    {
+        id: 'first_item',
+        name: 'First Steps',
+        desc: 'Add your first item',
+        icon: '🎯',
+        xp: 25,
+        condition: () => appState.items.length >= 1
+    },
+    {
+        id: 'five_items',
+        name: 'Collector',
+        desc: 'Track 5 different items',
+        icon: '📦',
+        xp: 50,
+        condition: () => appState.items.length >= 5
+    },
+    {
+        id: 'ten_items',
+        name: 'Hoarder',
+        desc: 'Track 10 different items',
+        icon: '🏆',
+        xp: 100,
+        condition: () => appState.items.length >= 10
+    },
+    {
+        id: 'first_log',
+        name: 'Pattern Builder',
+        desc: 'Log your first location',
+        icon: '📝',
+        xp: 25,
+        condition: () => getTotalLogs() >= 1
+    },
+    {
+        id: 'ten_logs',
+        name: 'Getting Organized',
+        desc: 'Log 10 locations',
+        icon: '📊',
+        xp: 75,
+        condition: () => getTotalLogs() >= 10
+    },
+    {
+        id: 'fifty_logs',
+        name: 'Memory Master',
+        desc: 'Log 50 locations',
+        icon: '🧠',
+        xp: 150,
+        condition: () => getTotalLogs() >= 50
+    },
+    {
+        id: 'week_streak',
+        name: 'Committed',
+        desc: 'Maintain a 7-day streak',
+        icon: '🔥',
+        xp: 100,
+        condition: () => appState.longestStreak >= 7
+    },
+    {
+        id: 'month_streak',
+        name: 'Dedicated',
+        desc: 'Maintain a 30-day streak',
+        icon: '⭐',
+        xp: 250,
+        condition: () => appState.longestStreak >= 30
+    },
+    {
+        id: 'stored_master',
+        name: 'Safe Keeper',
+        desc: 'Store 10 items safely',
+        icon: '🔐',
+        xp: 75,
+        condition: () => {
+            let storedCount = 0;
+            appState.items.forEach(item => {
+                storedCount += item.logs.filter(l => l.type === 'stored').length;
+            });
+            return storedCount >= 10;
+        }
+    },
+    {
+        id: 'consistent_logger',
+        name: 'Creature of Habit',
+        desc: 'Log same location 10 times',
+        icon: '🔄',
+        xp: 100,
+        condition: () => {
+            return appState.items.some(item => {
+                const freq = item.getLocationFrequency();
+                return Object.values(freq).some(count => count >= 10);
+            });
+        }
+    },
+    {
+        id: 'daily_champion',
+        name: 'Daily Champion',
+        desc: 'Complete 5 daily challenges',
+        icon: '🎖️',
+        xp: 150,
+        condition: () => {
+            const completedChallenges = localStorage.getItem('completed_challenges') || 0;
+            return parseInt(completedChallenges) >= 5;
+        }
+    },
+    {
+        id: 'level_five',
+        name: 'Rising Star',
+        desc: 'Reach Level 5',
+        icon: '🌟',
+        xp: 200,
+        condition: () => appState.level >= 5
+    }
+];
+
+// Milestones
+const MILESTONES = [
+    { id: 'items_5', title: 'Track 5 Items', desc: 'Add 5 items to your collection', icon: '📦', target: 5, type: 'items' },
+    { id: 'items_10', title: 'Track 10 Items', desc: 'Expand to 10 items', icon: '📦', target: 10, type: 'items' },
+    { id: 'logs_25', title: '25 Logs', desc: 'Record 25 locations', icon: '📝', target: 25, type: 'logs' },
+    { id: 'logs_50', title: '50 Logs', desc: 'Record 50 locations', icon: '📝', target: 50, type: 'logs' },
+    { id: 'logs_100', title: '100 Logs', desc: 'Record 100 locations', icon: '📝', target: 100, type: 'logs' },
+    { id: 'streak_7', title: '7-Day Streak', desc: 'Log for 7 days in a row', icon: '🔥', target: 7, type: 'streak' },
+    { id: 'streak_30', title: '30-Day Streak', desc: 'Log for 30 days in a row', icon: '🔥', target: 30, type: 'streak' }
+];
 
 // ============================================
 // STORAGE
 // ============================================
-const STORAGE_KEY = 'unearth_data_v3';
+const STORAGE_KEY = 'unearth_data_v4';
 const THEME_KEY = 'unearth_theme';
+const PROGRESS_KEY = 'unearth_progress';
 
 function saveData() {
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appState.items));
+        saveProgress();
     } catch (e) {
         console.error('Failed to save:', e);
         showToast('Failed to save data');
@@ -35,9 +204,47 @@ function loadData() {
         if (data) {
             appState.items = JSON.parse(data);
         }
+        loadProgress();
     } catch (e) {
         console.error('Failed to load:', e);
         appState.items = [];
+    }
+}
+
+function saveProgress() {
+    try {
+        const progress = {
+            xp: appState.xp,
+            level: appState.level,
+            streak: appState.streak,
+            lastActiveDate: appState.lastActiveDate,
+            longestStreak: appState.longestStreak,
+            achievements: appState.achievements,
+            dailyChallenge: appState.dailyChallenge
+        };
+        localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+    } catch (e) {
+        console.error('Failed to save progress:', e);
+    }
+}
+
+function loadProgress() {
+    try {
+        const progress = localStorage.getItem(PROGRESS_KEY);
+        if (progress) {
+            const data = JSON.parse(progress);
+            appState.xp = data.xp || 0;
+            appState.level = data.level || 1;
+            appState.streak = data.streak || 0;
+            appState.lastActiveDate = data.lastActiveDate;
+            appState.longestStreak = data.longestStreak || 0;
+            appState.achievements = data.achievements || [];
+            appState.dailyChallenge = data.dailyChallenge || { target: 3, current: 0, completed: false, date: null };
+        }
+        updateStreak();
+        checkDailyChallenge();
+    } catch (e) {
+        console.error('Failed to load progress:', e);
     }
 }
 
@@ -69,14 +276,14 @@ class Item {
         this.id = id || Date.now().toString();
         this.name = name;
         this.createdAt = Date.now();
-        this.logs = []; // Array of {timestamp, location, type: 'found'|'stored'}
+        this.logs = [];
     }
 
     addLog(location, type = 'found') {
         this.logs.push({
             timestamp: Date.now(),
             location: location,
-            type: type // 'found' or 'stored'
+            type: type
         });
     }
 
@@ -107,7 +314,6 @@ class Item {
 
     getLastKnownLocation() {
         if (this.logs.length === 0) return null;
-        // Get most recent "stored" log, or most recent log if no stored
         const stored = this.logs.filter(l => l.type === 'stored');
         if (stored.length > 0) {
             return stored[stored.length - 1].location;
@@ -146,72 +352,163 @@ function getTopLocation() {
 }
 
 // ============================================
-// BADGES/ACHIEVEMENTS
+// GAMIFICATION LOGIC
 // ============================================
-const BADGES = [
-    {
-        id: 'first_item',
-        name: 'Getting Started',
-        icon: '🎯',
-        condition: () => appState.items.length >= 1
-    },
-    {
-        id: 'first_log',
-        name: 'First Log',
-        icon: '📝',
-        condition: () => getTotalLogs() >= 1
-    },
-    {
-        id: 'five_items',
-        name: 'Collector',
-        icon: '📦',
-        condition: () => appState.items.length >= 5
-    },
-    {
-        id: 'ten_logs',
-        name: 'Pattern Builder',
-        icon: '🧠',
-        condition: () => getTotalLogs() >= 10
-    },
-    {
-        id: 'organized',
-        name: 'Organized',
-        icon: '⭐',
-        condition: () => {
-            // Has at least one stored location
-            return appState.items.some(item => 
-                item.logs.some(log => log.type === 'stored')
-            );
-        }
-    },
-    {
-        id: 'consistent',
-        name: 'Consistent',
-        icon: '🔄',
-        condition: () => {
-            // Same location logged 5+ times
-            return appState.items.some(item => {
-                const freq = item.getLocationFrequency();
-                return Object.values(freq).some(count => count >= 5);
-            });
-        }
-    }
-];
 
-function getEarnedBadges() {
-    return BADGES.filter(badge => badge.condition());
+function addXP(amount, reason = '') {
+    appState.xp += amount;
+    showXPGain(amount);
+    checkLevelUp();
+    checkAchievements();
+    saveProgress();
+    updateUI();
+}
+
+function checkLevelUp() {
+    const currentLevelData = LEVELS.find(l => l.level === appState.level);
+    if (!currentLevelData) return;
+    
+    if (appState.xp >= currentLevelData.xpNeeded) {
+        appState.level++;
+        const newLevelData = LEVELS.find(l => l.level === appState.level);
+        
+        if (newLevelData) {
+            showLevelUpModal(newLevelData);
+        }
+        
+        saveProgress();
+    }
+}
+
+function checkAchievements() {
+    const newAchievements = [];
+    
+    ACHIEVEMENTS.forEach(achievement => {
+        if (!appState.achievements.includes(achievement.id) && achievement.condition()) {
+            appState.achievements.push(achievement.id);
+            newAchievements.push(achievement);
+            addXP(achievement.xp, `Achievement: ${achievement.name}`);
+        }
+    });
+    
+    if (newAchievements.length > 0) {
+        showAchievementModal(newAchievements[0]);
+    }
+    
+    saveProgress();
+}
+
+function updateStreak() {
+    const today = new Date().toDateString();
+    
+    if (appState.lastActiveDate === today) {
+        return;
+    }
+    
+    if (appState.lastActiveDate) {
+        const lastDate = new Date(appState.lastActiveDate);
+        const todayDate = new Date();
+        const diffDays = Math.floor((todayDate - lastDate) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) {
+            appState.streak++;
+            if (appState.streak > appState.longestStreak) {
+                appState.longestStreak = appState.streak;
+            }
+            addXP(XP_REWARDS.MAINTAIN_STREAK, 'Streak maintained');
+        } else if (diffDays > 1) {
+            appState.streak = 1;
+        }
+    } else {
+        appState.streak = 1;
+    }
+    
+    appState.lastActiveDate = today;
+    addXP(XP_REWARDS.FIRST_LOG_TODAY, 'First log today');
+    saveProgress();
+}
+
+function checkDailyChallenge() {
+    const today = new Date().toDateString();
+    
+    if (appState.dailyChallenge.date !== today) {
+        appState.dailyChallenge = {
+            target: 3,
+            current: 0,
+            completed: false,
+            date: today
+        };
+        saveProgress();
+    }
+}
+
+function updateDailyChallenge() {
+    appState.dailyChallenge.current++;
+    
+    if (appState.dailyChallenge.current >= appState.dailyChallenge.target && !appState.dailyChallenge.completed) {
+        appState.dailyChallenge.completed = true;
+        addXP(XP_REWARDS.COMPLETE_DAILY_CHALLENGE, 'Daily challenge completed!');
+        showToast('🎉 Daily Challenge Complete! +50 XP');
+        
+        const count = parseInt(localStorage.getItem('completed_challenges') || '0');
+        localStorage.setItem('completed_challenges', (count + 1).toString());
+    }
+    
+    saveProgress();
 }
 
 // ============================================
 // UI RENDERING
 // ============================================
 
-function renderHome() {
-    // Update quick stats
+function updateUI() {
+    updateHeader();
+    updateDailyChallengeUI();
+    updateQuickStats();
+}
+
+function updateHeader() {
+    const levelData = LEVELS.find(l => l.level === appState.level) || LEVELS[0];
+    const nextLevelData = LEVELS.find(l => l.level === appState.level + 1);
+    
+    document.getElementById('levelBadge').querySelector('.level-number').textContent = appState.level;
+    
+    const xpNeeded = levelData.xpNeeded;
+    const prevLevelXP = appState.level > 1 ? LEVELS.find(l => l.level === appState.level - 1).xpNeeded : 0;
+    const currentLevelXP = appState.xp - prevLevelXP;
+    const neededForNext = xpNeeded - prevLevelXP;
+    const progress = (currentLevelXP / neededForNext) * 100;
+    
+    document.getElementById('xpProgressFill').style.width = `${Math.min(progress, 100)}%`;
+    document.getElementById('xpCurrent').textContent = appState.xp;
+    document.getElementById('xpNeeded').textContent = xpNeeded;
+    
+    if (nextLevelData) {
+        document.getElementById('nextLevelName').textContent = nextLevelData.name;
+    }
+}
+
+function updateDailyChallengeUI() {
+    const progress = (appState.dailyChallenge.current / appState.dailyChallenge.target) * 100;
+    document.getElementById('challengeProgressFill').style.width = `${Math.min(progress, 100)}%`;
+    document.getElementById('challengeCurrent').textContent = appState.dailyChallenge.current;
+    document.getElementById('challengeTarget').textContent = appState.dailyChallenge.target;
+    
+    if (appState.dailyChallenge.completed) {
+        document.getElementById('dailyChallenge').style.opacity = '0.6';
+        document.querySelector('.challenge-desc').textContent = '✓ Completed!';
+    }
+}
+
+function updateQuickStats() {
     document.getElementById('totalItems').textContent = appState.items.length;
     document.getElementById('totalLogs').textContent = getTotalLogs();
+    document.getElementById('streakCount').textContent = appState.streak;
+}
+
+function renderHome() {
+    updateUI();
     
-    // Render items list
     const itemsList = document.getElementById('itemsList');
     const emptyState = document.getElementById('emptyState');
     
@@ -221,7 +518,6 @@ function renderHome() {
     } else {
         emptyState.classList.remove('show');
         
-        // Sort by most recent activity
         const sortedItems = [...appState.items].sort((a, b) => {
             const aLast = a.logs.length > 0 ? a.logs[a.logs.length - 1].timestamp : a.createdAt;
             const bLast = b.logs.length > 0 ? b.logs[b.logs.length - 1].timestamp : b.createdAt;
@@ -245,7 +541,6 @@ function renderHome() {
             `;
         }).join('');
         
-        // Add click handlers
         itemsList.querySelectorAll('.item-card').forEach(card => {
             card.addEventListener('click', () => {
                 showItemDetail(card.dataset.itemId);
@@ -262,10 +557,8 @@ function renderItemDetail(itemId) {
         return;
     }
     
-    // Set title
     document.getElementById('detailTitle').textContent = item.name;
     
-    // Render common locations
     const commonLocations = document.getElementById('commonLocations');
     const noLocations = document.getElementById('noLocations');
     const topLocations = item.getTopLocations(5);
@@ -282,7 +575,6 @@ function renderItemDetail(itemId) {
             </div>
         `).join('');
         
-        // Add click handlers to chips
         commonLocations.querySelectorAll('.location-chip').forEach(chip => {
             chip.addEventListener('click', () => {
                 const location = chip.dataset.location;
@@ -292,7 +584,6 @@ function renderItemDetail(itemId) {
         });
     }
     
-    // Render history
     const historyList = document.getElementById('historyList');
     const noHistory = document.getElementById('noHistory');
     const recentLogs = item.getRecentLogs(10);
@@ -314,8 +605,76 @@ function renderItemDetail(itemId) {
     }
 }
 
-function renderStats() {
-    // Update main stats
+function renderProgress() {
+    const levelData = LEVELS.find(l => l.level === appState.level) || LEVELS[0];
+    const prevLevelXP = appState.level > 1 ? LEVELS.find(l => l.level === appState.level - 1).xpNeeded : 0;
+    
+    document.getElementById('progressLevel').textContent = appState.level;
+    document.getElementById('progressTitle').textContent = levelData.name;
+    document.getElementById('levelNumber').textContent = appState.level;
+    document.getElementById('levelTitle').textContent = levelData.name;
+    
+    const currentLevelXP = appState.xp - prevLevelXP;
+    const neededForNext = levelData.xpNeeded - prevLevelXP;
+    const progress = (currentLevelXP / neededForNext) * 100;
+    
+    document.getElementById('xpCurrentLarge').textContent = appState.xp;
+    document.getElementById('xpNeededLarge').textContent = levelData.xpNeeded;
+    document.getElementById('xpBarFillLarge').style.width = `${Math.min(progress, 100)}%`;
+    
+    const perksList = document.getElementById('perksList');
+    perksList.innerHTML = levelData.perks.map(perk => `
+        <div class="perk-item">✨ ${perk}</div>
+    `).join('');
+    
+    const achievementsList = document.getElementById('achievementsList');
+    const earnedCount = appState.achievements.length;
+    document.getElementById('achievementsEarned').textContent = earnedCount;
+    document.getElementById('achievementsTotal').textContent = ACHIEVEMENTS.length;
+    
+    achievementsList.innerHTML = ACHIEVEMENTS.map(achievement => {
+        const earned = appState.achievements.includes(achievement.id);
+        return `
+            <div class="achievement ${earned ? 'earned' : ''}">
+                <span class="achievement-icon">${achievement.icon}</span>
+                <div class="achievement-name">${achievement.name}</div>
+                <div class="achievement-desc">${achievement.desc}</div>
+                <div class="achievement-xp">+${achievement.xp} XP</div>
+            </div>
+        `;
+    }).join('');
+    
+    const milestonesList = document.getElementById('milestonesList');
+    milestonesList.innerHTML = MILESTONES.map(milestone => {
+        let current = 0;
+        if (milestone.type === 'items') {
+            current = appState.items.length;
+        } else if (milestone.type === 'logs') {
+            current = getTotalLogs();
+        } else if (milestone.type === 'streak') {
+            current = appState.longestStreak;
+        }
+        
+        const completed = current >= milestone.target;
+        const progress = Math.min((current / milestone.target) * 100, 100);
+        
+        return `
+            <div class="milestone ${completed ? 'completed' : ''}">
+                <div class="milestone-icon">${milestone.icon}</div>
+                <div class="milestone-content">
+                    <div class="milestone-title">${milestone.title}</div>
+                    <div class="milestone-desc">${milestone.desc}</div>
+                    <div class="milestone-progress">
+                        <div class="milestone-progress-bar">
+                            <div class="milestone-progress-fill" style="width: ${progress}%"></div>
+                        </div>
+                        <span class="milestone-count">${current}/${milestone.target}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
     document.getElementById('statsTotal').textContent = getTotalLogs();
     
     const mostLogged = getMostLoggedItem();
@@ -326,37 +685,22 @@ function renderStats() {
     document.getElementById('statsTopLocation').textContent = 
         topLoc ? escapeHtml(topLoc) : '—';
     
-    // Render achievements
-    const achievementsList = document.getElementById('achievementsList');
-    const earnedBadges = getEarnedBadges();
-    
-    achievementsList.innerHTML = BADGES.map(badge => {
-        const earned = earnedBadges.some(b => b.id === badge.id);
-        return `
-            <div class="achievement ${earned ? 'earned' : ''}">
-                <div class="achievement-icon">${badge.icon}</div>
-                <div class="achievement-name">${badge.name}</div>
-            </div>
-        `;
-    }).join('');
+    document.getElementById('statsLongestStreak').textContent = appState.longestStreak;
 }
 
 // ============================================
 // SCREEN NAVIGATION
 // ============================================
 function switchScreen(screenName) {
-    // Hide all screens
     document.querySelectorAll('.screen').forEach(screen => {
         screen.classList.remove('active');
     });
     
-    // Show target screen
     const targetScreen = document.getElementById(`${screenName}Screen`);
     if (targetScreen) {
         targetScreen.classList.add('active');
         appState.currentScreen = screenName;
         
-        // Update nav
         document.querySelectorAll('.nav-btn[data-screen]').forEach(btn => {
             btn.classList.remove('active');
         });
@@ -365,13 +709,12 @@ function switchScreen(screenName) {
             activeBtn.classList.add('active');
         }
         
-        // Render screen
         switch(screenName) {
             case 'home':
                 renderHome();
                 break;
-            case 'stats':
-                renderStats();
+            case 'progress':
+                renderProgress();
                 break;
         }
     }
@@ -408,6 +751,35 @@ function hideModal(modalId) {
     }
 }
 
+function showLevelUpModal(levelData) {
+    document.getElementById('newLevelNumber').textContent = levelData.level;
+    document.getElementById('newLevelName').textContent = levelData.name;
+    
+    const perksList = document.getElementById('newPerksList');
+    perksList.innerHTML = levelData.perks.map(perk => `<li>${perk}</li>`).join('');
+    
+    showModal('levelUpModal');
+}
+
+function showAchievementModal(achievement) {
+    document.getElementById('unlockedAchievementIcon').textContent = achievement.icon;
+    document.getElementById('unlockedAchievementName').textContent = achievement.name;
+    document.getElementById('unlockedAchievementDesc').textContent = achievement.desc;
+    document.getElementById('unlockedAchievementXP').textContent = achievement.xp;
+    
+    showModal('achievementModal');
+}
+
+function showXPGain(amount) {
+    const xpGain = document.getElementById('xpGain');
+    document.getElementById('xpGainAmount').textContent = amount;
+    xpGain.classList.remove('hidden');
+    
+    setTimeout(() => {
+        xpGain.classList.add('hidden');
+    }, 1000);
+}
+
 // ============================================
 // ITEM MANAGEMENT
 // ============================================
@@ -419,7 +791,6 @@ function addItem(name) {
     
     const trimmedName = name.trim();
     
-    // Check duplicates
     if (appState.items.some(item => item.name.toLowerCase() === trimmedName.toLowerCase())) {
         showToast('Item already exists');
         return false;
@@ -427,9 +798,12 @@ function addItem(name) {
     
     const newItem = new Item(trimmedName);
     appState.items.push(newItem);
-    saveData();
     
-    showToast(`${trimmedName} added!`);
+    addXP(XP_REWARDS.ADD_ITEM, 'Added new item');
+    saveData();
+    checkAchievements();
+    
+    showToast(`${trimmedName} added! +${XP_REWARDS.ADD_ITEM} XP`);
     return true;
 }
 
@@ -458,10 +832,15 @@ function addLogToItem(itemId, location, type) {
     }
     
     item.addLog(location.trim(), type);
+    
+    updateStreak();
+    updateDailyChallenge();
+    addXP(XP_REWARDS.LOG_LOCATION, 'Logged location');
+    checkAchievements();
     saveData();
     
     const message = type === 'stored' ? 'Location saved!' : 'Found location logged!';
-    showToast(message);
+    showToast(`${message} +${XP_REWARDS.LOG_LOCATION} XP`);
     return true;
 }
 
@@ -521,7 +900,6 @@ function getItemEmoji(name) {
     return '📦';
 }
 
-// Get common location suggestions
 function getCommonLocations() {
     return [
         'Kitchen drawer',
@@ -557,9 +935,16 @@ function toggleDarkMode() {
 // ============================================
 function exportData() {
     const data = {
-        version: '3.0',
+        version: '4.0',
         exportDate: new Date().toISOString(),
-        items: appState.items
+        items: appState.items,
+        progress: {
+            xp: appState.xp,
+            level: appState.level,
+            streak: appState.streak,
+            longestStreak: appState.longestStreak,
+            achievements: appState.achievements
+        }
     };
     
     const dataStr = JSON.stringify(data, null, 2);
@@ -576,10 +961,24 @@ function exportData() {
 }
 
 function clearAllData() {
-    if (confirm('Delete ALL items and logs? This cannot be undone.')) {
+    if (confirm('Delete ALL items and logs? Progress will be kept. This cannot be undone.')) {
         appState.items = [];
         saveData();
         showToast('All data cleared');
+        switchScreen('home');
+    }
+}
+
+function resetProgress() {
+    if (confirm('Reset ALL progress? This will erase your level, XP, achievements, and streak. This cannot be undone.')) {
+        appState.xp = 0;
+        appState.level = 1;
+        appState.streak = 0;
+        appState.longestStreak = 0;
+        appState.achievements = [];
+        appState.dailyChallenge = { target: 3, current: 0, completed: false, date: null };
+        saveProgress();
+        showToast('Progress reset');
         switchScreen('home');
     }
 }
@@ -588,17 +987,14 @@ function clearAllData() {
 // EVENT LISTENERS
 // ============================================
 function initEventListeners() {
-    // Theme toggle
     document.getElementById('themeToggle')?.addEventListener('click', toggleDarkMode);
     
-    // Navigation
     document.querySelectorAll('.nav-btn[data-screen]').forEach(btn => {
         btn.addEventListener('click', () => {
             switchScreen(btn.dataset.screen);
         });
     });
     
-    // Add item buttons
     document.getElementById('addItemBtn')?.addEventListener('click', () => {
         showModal('addItemModal');
     });
@@ -607,7 +1003,6 @@ function initEventListeners() {
         showModal('addItemModal');
     });
     
-    // Add item modal
     document.getElementById('saveItemBtn')?.addEventListener('click', () => {
         const input = document.getElementById('itemNameInput');
         if (addItem(input.value)) {
@@ -626,17 +1021,14 @@ function initEventListeners() {
         }
     });
     
-    // Detail screen - back
     document.getElementById('backBtn')?.addEventListener('click', () => {
         switchScreen('home');
     });
     
-    // Detail screen - delete
     document.getElementById('deleteItemBtn')?.addEventListener('click', () => {
         showModal('deleteModal');
     });
     
-    // Delete modal
     document.getElementById('confirmDeleteBtn')?.addEventListener('click', () => {
         if (appState.currentItemId && deleteItem(appState.currentItemId)) {
             hideModal('deleteModal');
@@ -648,7 +1040,6 @@ function initEventListeners() {
         hideModal('deleteModal');
     });
     
-    // Action buttons - Found It
     document.getElementById('foundItBtn')?.addEventListener('click', () => {
         appState.currentLogType = 'found';
         document.getElementById('logModalTitle').textContent = 'Where did you find it?';
@@ -657,7 +1048,6 @@ function initEventListeners() {
         showModal('logLocationModal');
     });
     
-    // Action buttons - Stored It
     document.getElementById('storedItBtn')?.addEventListener('click', () => {
         appState.currentLogType = 'stored';
         document.getElementById('logModalTitle').textContent = 'Where did you put it?';
@@ -666,7 +1056,6 @@ function initEventListeners() {
         showModal('logLocationModal');
     });
     
-    // Log location modal
     document.getElementById('saveLogBtn')?.addEventListener('click', () => {
         const input = document.getElementById('locationInput');
         if (appState.currentItemId && addLogToItem(appState.currentItemId, input.value, appState.currentLogType)) {
@@ -685,7 +1074,14 @@ function initEventListeners() {
         }
     });
     
-    // More button
+    document.getElementById('closeLevelUpBtn')?.addEventListener('click', () => {
+        hideModal('levelUpModal');
+    });
+    
+    document.getElementById('closeAchievementBtn')?.addEventListener('click', () => {
+        hideModal('achievementModal');
+    });
+    
     document.getElementById('moreBtn')?.addEventListener('click', () => {
         showModal('moreModal');
     });
@@ -694,7 +1090,6 @@ function initEventListeners() {
         hideModal('moreModal');
     });
     
-    // More options
     document.getElementById('exportDataBtn')?.addEventListener('click', () => {
         exportData();
         hideModal('moreModal');
@@ -705,12 +1100,16 @@ function initEventListeners() {
         clearAllData();
     });
     
-    document.getElementById('aboutBtn')?.addEventListener('click', () => {
+    document.getElementById('resetProgressBtn')?.addEventListener('click', () => {
         hideModal('moreModal');
-        showToast('Unearth v3.0 - Never forget where you put things');
+        resetProgress();
     });
     
-    // Close modals on overlay click
+    document.getElementById('aboutBtn')?.addEventListener('click', () => {
+        hideModal('moreModal');
+        showToast('Unearth v4.0 - Gamified Experience');
+    });
+    
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) {
@@ -720,7 +1119,6 @@ function initEventListeners() {
     });
 }
 
-// Setup quick location suggestions
 function setupQuickLocations() {
     const quickLocations = document.getElementById('quickLocations');
     const item = appState.items.find(i => i.id === appState.currentItemId);
@@ -730,7 +1128,6 @@ function setupQuickLocations() {
     const topLocs = item.getTopLocations(3);
     const commonLocs = getCommonLocations().slice(0, 4);
     
-    // Combine item's top locations with common suggestions
     const suggestions = new Set();
     topLocs.forEach(([loc]) => suggestions.add(loc));
     commonLocs.forEach(loc => suggestions.add(loc));
@@ -741,7 +1138,6 @@ function setupQuickLocations() {
         </button>
     `).join('');
     
-    // Add click handlers
     quickLocations.querySelectorAll('.quick-location').forEach(btn => {
         btn.addEventListener('click', () => {
             document.getElementById('locationInput').value = btn.dataset.location;
@@ -761,24 +1157,6 @@ function registerServiceWorker() {
 }
 
 // ============================================
-// URL PARAMS
-// ============================================
-function handleURLParams() {
-    const params = new URLSearchParams(window.location.search);
-    const action = params.get('action');
-    
-    if (action === 'add') {
-        showModal('addItemModal');
-    } else if (action === 'stats') {
-        switchScreen('stats');
-    }
-    
-    if (action) {
-        window.history.replaceState({}, document.title, '/');
-    }
-}
-
-// ============================================
 // INITIALIZATION
 // ============================================
 function init() {
@@ -788,7 +1166,6 @@ function init() {
     loadTheme();
     registerServiceWorker();
     initEventListeners();
-    handleURLParams();
     
     switchScreen('home');
     
