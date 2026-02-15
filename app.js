@@ -105,17 +105,13 @@ function initializeEventListeners() {
     
     // Item Actions
     document.getElementById('lostBtn').addEventListener('click', handleLostItem);
-    document.getElementById('deleteItemBtn').addEventListener('click', openDeleteModal);
     
     // Found Location
     document.getElementById('cancelFoundBtn').addEventListener('click', closeFoundModal);
     document.getElementById('saveFoundBtn').addEventListener('click', saveFoundLocation);
     
     
-    // Delete Confirmation
-    document.getElementById('cancelDeleteBtn').addEventListener('click', closeDeleteModal);
-    document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
-    
+ 
         // Global form submission fix for mobile
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
@@ -260,7 +256,12 @@ function saveFoundLocation() {
 }
 
 function openDeleteModal() {
-    document.getElementById('deleteModal').classList.remove('hidden');
+    const modal = document.getElementById('deleteModal');
+    modal.classList.remove('hidden');
+    
+    // Attach button listeners here
+    document.getElementById('cancelDeleteBtn').onclick = closeDeleteModal;
+    document.getElementById('confirmDeleteBtn').onclick = confirmDelete;
 }
 
 function closeDeleteModal() {
@@ -368,6 +369,11 @@ function renderItemDetail() {
                 <div class="log-time">${formatDate(log.lostAt)}</div>
             </div>
         `).join('');
+    }
+        
+    const deleteBtn = document.getElementById('deleteItemBtn');
+    if (deleteBtn) {
+        deleteBtn.onclick = openDeleteModal;
     }
 }
 
