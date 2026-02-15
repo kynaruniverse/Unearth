@@ -1,6 +1,38 @@
 // ===========================================
 // UNEARTH - MAIN APPLICATION LOGIC
 // ===========================================
+/** * 🧠 THE PREDICTION ENGINE 
+ * Checks the current day and compares it to history
+ */
+const getContextualAdvice = (item) => {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const todayIndex = new Date().getDay(); 
+    const todayName = days[todayIndex];
+    const history = item.logs || [];
+    
+    // Filter logs for today's specific weekday
+    const daySpecificLogs = history.filter(log => log.foundAt && new Date(log.foundAt).getDay() === todayIndex);
+    
+    if (daySpecificLogs.length > 0) {
+        const counts = {};
+        daySpecificLogs.forEach(l => {
+            if(l.location) counts[l.location] = (counts[l.location] || 0) + 1;
+        });
+        const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+        if (sorted.length > 0) {
+            return `Pattern Alert: Usually in the ${sorted[0][0]} on ${todayName}s`;
+        }
+    }
+    
+    // Fallback if no day-specific data exists
+    const topLocations = getTopPredictions(item, 1);
+    if (topLocations.length > 0) {
+        return `Top Spot: ${topLocations[0].location}`;
+    }
+    
+    return "No patterns detected yet";
+};
+
 
 // Application State
 const AppState = {
@@ -69,9 +101,7 @@ function initializeEventListeners() {
     document.getElementById('addItemBtn').addEventListener('click', openAddItemModal);
     document.getElementById('cancelAddBtn').addEventListener('click', closeAddItemModal);
     document.getElementById('saveItemBtn').addEventListener('click', saveNewItem);
-    document.getElementById('itemNameInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') saveNewItem();
-    });
+    
     
     // Item Actions
     document.getElementById('lostBtn').addEventListener('click', handleLostItem);
@@ -80,13 +110,23 @@ function initializeEventListeners() {
     // Found Location
     document.getElementById('cancelFoundBtn').addEventListener('click', closeFoundModal);
     document.getElementById('saveFoundBtn').addEventListener('click', saveFoundLocation);
-    document.getElementById('locationInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') saveFoundLocation();
-    });
+    
     
     // Delete Confirmation
     document.getElementById('cancelDeleteBtn').addEventListener('click', closeDeleteModal);
     document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
+    
+        // Global form submission fix for mobile
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            if (!document.getElementById('addItemModal').classList.contains('hidden')) {
+                saveNewItem();
+            } else if (!document.getElementById('foundModal').classList.contains('hidden')) {
+                saveFoundLocation();
+            }
+        }
+    });
+
 }
 
 // ===========================================
@@ -214,6 +254,7 @@ function saveFoundLocation() {
     item.locations[location]++;
     
     saveData();
+    renderItemsList();
     closeFoundModal();
     renderItemDetail();
     showToast(`Found at ${location}`);
@@ -268,18 +309,21 @@ function renderItemsList() {
         card.className = 'item-card';
         card.addEventListener('click', () => openItemDetail(itemName));
         
+                const advice = getContextualAdvice(item); // Get the smart prediction
+
         card.innerHTML = `
             <div class="item-card-header">
                 <div class="item-name">${itemName}</div>
-                <div class="item-count">Lost ${item.totalLost}x</div>
+                <div class="item-count">${item.totalLost}x lost</div>
             </div>
-            <div class="item-predictions">
-                ${predictions.map((pred, idx) => 
-                    `<div class="prediction-tag">#${idx + 1} ${pred.location}</div>`
-                ).join('')}
-                ${predictions.length === 0 ? '<div class="prediction-tag">No data yet</div>' : ''}
+            <div class="prediction-badge">
+                ✨ ${advice}
+            </div>
+            <div class="card-footer-meta">
+                ${item.logs.length > 0 ? 'Last seen ' + formatDate(item.logs[0].lostAt) : 'Never lost'}
             </div>
         `;
+
         
         itemsList.appendChild(card);
     });

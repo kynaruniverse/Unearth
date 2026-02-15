@@ -1,52 +1,39 @@
 {
-  "name": "Unearth - Pattern-Driven Chaos Companion",
+  "name": "Unearth: Pattern Companion",
   "short_name": "Unearth",
-  "description": "Track and predict where you lose things",
+  "description": "Predictive tracking for the chronically disorganized.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
+  "background_color": "#020617",
+  "theme_color": "#020617",
   "orientation": "portrait-primary",
   "icons": [
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     }
   ],
-  "categories": ["productivity", "utilities", "lifestyle"],
-  "screenshots": [],
+  "categories": ["productivity", "utilities"],
   "shortcuts": [
     {
-      "name": "Add Item",
+      "name": "Add New Item",
       "short_name": "Add",
-      "description": "Quickly add a new item to track",
       "url": "/?action=add",
-      "icons": [
-        {
-          "src": "/icons/icon-192.png",
-          "sizes": "192x192"
-        }
-      ]
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "name": "View Stats",
+      "name": "Check Patterns",
       "short_name": "Stats",
-      "description": "See your loss patterns",
       "url": "/?action=stats",
-      "icons": [
-        {
-          "src": "/icons/icon-192.png",
-          "sizes": "192x192"
-        }
-      ]
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

@@ -2,17 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Unearth - Track and predict where you lose things">
-    <meta name="theme-color" content="#000000">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=0">
+    <meta name="description" content="Unearth - Pattern-Driven Chaos Companion">
     
-    <!-- PWA -->
+    <meta name="theme-color" content="#020617">
+    
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="/icons/icon-192.png">
     
-    <!-- iOS PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Unearth">
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
     
@@ -20,21 +19,15 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- App Container -->
     <div id="app">
-        
-        <!-- Header -->
-        <header class="header">
-            <h1 class="logo">Unearth</h1>
-            <button class="icon-btn" id="statsBtn" aria-label="View Stats">
-                📊
-            </button>
+        <header class="glass-header">
+            <div class="header-content">
+                <h1 class="logo-text">Unearth<span class="dot">.</span></h1>
+                <button id="statsBtn" class="blur-btn" aria-label="View Stats">📊</button>
+            </div>
         </header>
 
-        <!-- Main Screen: Items List -->
         <main id="mainScreen" class="screen active">
-            
-            <!-- Empty State (Shows when no items) -->
             <div id="emptyState" class="empty-state">
                 <div class="empty-icon">🔍</div>
                 <h2>Start tracking</h2>
@@ -42,157 +35,113 @@
                 <p class="hint">Keys, wallet, phone, glasses...</p>
             </div>
 
-            <!-- Items List (Hidden until items exist) -->
             <div id="itemsList" class="items-list hidden">
-                <!-- Items will be dynamically inserted here -->
-            </div>
+                </div>
 
-            <!-- Add Item Button (Fixed at bottom) -->
-            <button class="fab" id="addItemBtn" aria-label="Add Item">
-                +
-            </button>
+            <div id="addItemBtn" class="fab-portal">
+                <div class="fab-inner">+</div>
+            </div>
         </main>
 
-        <!-- Stats Screen -->
         <main id="statsScreen" class="screen">
             <div class="screen-header">
-                <button class="back-btn" id="backFromStats" aria-label="Back">
-                    ←
-                </button>
-                <h2>Your Stats</h2>
-                <div class="spacer"></div>
+                <button class="back-btn" id="backFromStats" aria-label="Back">←</button>
+                <h2>Your Patterns</h2>
             </div>
 
             <div class="stats-container">
-                <!-- Total Losses Card -->
-                <div class="stat-card">
-                    <div class="stat-icon">😅</div>
-                    <div class="stat-label">Total Losses</div>
-                    <div class="stat-value" id="totalLosses">0</div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">😅</div>
+                        <div class="stat-label">Total Losses</div>
+                        <div class="stat-value" id="totalLosses">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">👑</div>
+                        <div class="stat-label">Most Chaotic</div>
+                        <div class="stat-value" id="mostLostItem">—</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📍</div>
+                        <div class="stat-label">Top Hiding Spot</div>
+                        <div class="stat-value" id="topLocation">—</div>
+                    </div>
                 </div>
 
-                <!-- Most Lost Item Card -->
-                <div class="stat-card">
-                    <div class="stat-icon">👑</div>
-                    <div class="stat-label">Most Chaotic Item</div>
-                    <div class="stat-value" id="mostLostItem">—</div>
-                </div>
-
-                <!-- Top Location Card -->
-                <div class="stat-card">
-                    <div class="stat-icon">📍</div>
-                    <div class="stat-label">Top Hiding Spot</div>
-                    <div class="stat-value" id="topLocation">—</div>
-                </div>
-
-                <!-- Badges Section -->
                 <div class="badges-section">
                     <h3>Achievements</h3>
-                    <div class="badges-grid" id="badgesGrid">
-                        <!-- Badges dynamically inserted -->
-                    </div>
+                    <div class="badges-grid" id="badgesGrid"></div>
                 </div>
             </div>
         </main>
 
-        <!-- Item Detail Screen -->
         <main id="itemDetailScreen" class="screen">
             <div class="screen-header">
-                <button class="back-btn" id="backFromDetail" aria-label="Back">
-                    ←
-                </button>
+                <button class="back-btn" id="backFromDetail" aria-label="Back">←</button>
                 <h2 id="itemDetailTitle">Item</h2>
-                <button class="icon-btn" id="deleteItemBtn" aria-label="Delete Item">
-                    🗑️
-                </button>
+                <button class="icon-btn-danger" id="deleteItemBtn">🗑️</button>
             </div>
 
             <div class="detail-container">
-                <!-- Stats Summary -->
-                <div class="detail-stat">
-                    <span class="detail-label">Total Lost:</span>
-                    <span class="detail-value" id="detailTotalLost">0</span>
+                <div class="stat-pill">
+                    <span>Lost <strong id="detailTotalLost">0</strong> times</span>
                 </div>
 
-                <!-- Predictions -->
                 <div class="predictions-section">
-                    <h3>Most Likely Locations</h3>
-                    <div id="predictionsList" class="predictions-list">
-                        <!-- Predictions dynamically inserted -->
-                    </div>
+                    <h3>Contextual Predictions</h3>
+                    <div id="predictionsList" class="predictions-list"></div>
                 </div>
 
-                <!-- Action Buttons -->
                 <div class="action-buttons">
-                    <button class="btn btn-primary btn-large" id="lostBtn">
-                        😰 I Lost It
+                    <button class="btn-lost-main" id="lostBtn">
+                        😰 I LOST IT AGAIN
                     </button>
                 </div>
 
-                <!-- Recent Logs -->
                 <div class="logs-section">
                     <h3>Recent History</h3>
-                    <div id="logsList" class="logs-list">
-                        <!-- Logs dynamically inserted -->
-                    </div>
+                    <div id="logsList" class="logs-list"></div>
                 </div>
             </div>
         </main>
 
-    </div>
-
-    <!-- Add Item Modal -->
-    <div id="addItemModal" class="modal hidden">
-        <div class="modal-content">
-            <h3>Add Item</h3>
-            <input 
-                type="text" 
-                id="itemNameInput" 
-                placeholder="e.g., Keys, Wallet, Phone..."
-                maxlength="30"
-                autocomplete="off"
-            >
-            <div class="modal-buttons">
-                <button class="btn btn-secondary" id="cancelAddBtn">Cancel</button>
-                <button class="btn btn-primary" id="saveItemBtn">Add</button>
+        <div id="addItemModal" class="modal-overlay hidden">
+            <div class="modal-sheet">
+                <h3>Track New Item</h3>
+                <input type="text" id="itemNameInput" placeholder="What did you lose?" maxlength="30">
+                <div class="modal-actions">
+                    <button id="cancelAddBtn" class="btn-text">Cancel</button>
+                    <button id="saveItemBtn" class="btn-primary">Start Tracking</button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Found Location Modal -->
-    <div id="foundModal" class="modal hidden">
-        <div class="modal-content">
-            <h3>Where did you find it?</h3>
-            <input 
-                type="text" 
-                id="locationInput" 
-                placeholder="e.g., Couch, Kitchen Table..."
-                maxlength="30"
-                autocomplete="off"
-            >
-            <div class="modal-buttons">
-                <button class="btn btn-secondary" id="cancelFoundBtn">Cancel</button>
-                <button class="btn btn-primary" id="saveFoundBtn">Save</button>
+        <div id="foundModal" class="modal-overlay hidden">
+            <div class="modal-sheet">
+                <h3>Found it!</h3>
+                <p>Where was it hiding?</p>
+                <input type="text" id="locationInput" placeholder="e.g. Under the couch">
+                <div class="modal-actions">
+                    <button id="cancelFoundBtn" class="btn-text">Cancel</button>
+                    <button id="saveFoundBtn" class="btn-primary">Save Pattern</button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Delete Confirmation Modal -->
-    <div id="deleteModal" class="modal hidden">
-        <div class="modal-content">
-            <h3>Delete this item?</h3>
-            <p class="warning-text">This will delete all logs and data for this item.</p>
-            <div class="modal-buttons">
-                <button class="btn btn-secondary" id="cancelDeleteBtn">Cancel</button>
-                <button class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+        <div id="deleteModal" class="modal-overlay hidden">
+            <div class="modal-sheet">
+                <h3>Erase Data?</h3>
+                <p class="warning-text">This will delete all logs for this item.</p>
+                <div class="modal-actions">
+                    <button id="cancelDeleteBtn" class="btn-text">Cancel</button>
+                    <button id="confirmDeleteBtn" class="btn-danger">Delete Forever</button>
+                </div>
             </div>
         </div>
+
+        <div id="toast" class="toast hidden"></div>
     </div>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="toast hidden"></div>
-
-    <!-- Scripts -->
     <script src="app.js"></script>
 </body>
 </html>
