@@ -1,692 +1,828 @@
-// ===========================================
-// UNEARTH ENHANCED - FULL APPLICATION LOGIC
-// Bottom Tabs + Dashboard + All Features
-// ===========================================
+// ============================================
+// UNEARTH APP.JS - Pattern-Driven Chaos Companion
+// Progressive Web App - 2026
+// ============================================
 
-// ===========================================
-// CONTEXTUAL PREDICTION ENGINE
-// ===========================================
-
-const getContextualAdvice = (item) => {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const todayIndex = new Date().getDay(); 
-    const todayName = days[todayIndex];
-    const history = item.logs || [];
-    
-    const daySpecificLogs = history.filter(log => log.foundAt && new Date(log.foundAt).getDay() === todayIndex);
-    
-    if (daySpecificLogs.length > 0) {
-        const counts = {};
-        daySpecificLogs.forEach(l => {
-            if(l.location) counts[l.location] = (counts[l.location] || 0) + 1;
-        });
-        const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
-        if (sorted.length > 0) {
-            return `Usually in the ${sorted[0][0]} on ${todayName}s`;
-        }
-    }
-    
-    const topLocations = getTopPredictions(item, 1);
-    if (topLocations.length > 0) {
-        return `Most often at: ${topLocations[0].location}`;
-    }
-    
-    return "No patterns yet";
-};
-
-// Application State
-const AppState = {
+// ============================================
+// STATE MANAGEMENT
+// ============================================
+let appState = {
+    items: [],
+    currentItemId: null,
     currentScreen: 'dashboard',
-    currentItem: null,
-    data: {
-        items: {}
-    }
+    darkMode: false
 };
 
-// Badge Definitions
-const BADGES = [
-    { id: 'first_loss', name: 'First Loss', icon: '🎯', requirement: 1 },
-    { id: 'detective', name: 'Detective', icon: '🔍', requirement: 10 },
-    { id: 'chaos_master', name: 'Chaos Master', icon: '😅', requirement: 50 },
-    { id: 'pattern_finder', name: 'Pattern Finder', icon: '🧠', requirement: 100 }
-];
-
-// ===========================================
-// INITIALIZATION
-// ===========================================
-
-document.addEventListener('DOMContentLoaded', () => {
-    loadData();
-    initializeEventListeners();
-    render();
-    registerServiceWorker();
-});
-
-// ===========================================
-// DATA MANAGEMENT
-// ===========================================
-
-function loadData() {
-    try {
-        const stored = localStorage.getItem('unearthData');
-        if (stored) {
-            AppState.data = JSON.parse(stored);
-        }
-    } catch (error) {
-        console.error('Error loading data:', error);
-        showToast('Error loading data');
-    }
-}
+// ============================================
+// LOCALSTORAGE HELPERS
+// ============================================
+const STORAGE_KEY = 'unearth_data_v2';
+const THEME_KEY = 'unearth_theme';
 
 function saveData() {
     try {
-        localStorage.setItem('unearthData', JSON.stringify(AppState.data));
-    } catch (error) {
-        console.error('Error saving data:', error);
-        showToast('Error saving data');
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState.items));
+    } catch (e) {
+        console.error('Failed to save data:', e);
+        showToast('Failed to save data');
     }
 }
 
-// ===========================================
-// EVENT LISTENERS
-// ===========================================
+function loadData() {
+    try {
+        const data = localStorage.getItem(STORAGE_KEY);
+        if (data) {
+            appState.items = JSON.parse(data);
+        }
+    } catch (e) {
+        console.error('Failed to load data:', e);
+        appState.items = [];
+    }
+}
 
-function initializeEventListeners() {
-    // Bottom Tab Navigation
-    document.querySelectorAll('.tab-btn[data-screen]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const screen = btn.dataset.screen;
-            showScreen(screen);
-            updateActiveTab(screen);
+function loadTheme() {
+    try {
+        const savedTheme = localStorage.getItem(THEME_KEY);
+        if (savedTheme === 'dark') {
+            appState.darkMode = true;
+            document.body.classList.add('dark-mode');
+        } else {
+            appState.darkMode = false;
+            document.body.classList.remove('dark-mode');
+        }
+    } catch (e) {
+        console.error('Failed to load theme:', e);
+    }
+}
+
+function saveTheme() {
+    try {
+        localStorage.setItem(THEME_KEY, appState.darkMode ? 'dark' : 'light');
+    } catch (e) {
+        console.error('Failed to save theme:', e);
+    }
+}
+
+// ============================================
+// ITEM CLASS
+// ============================================
+class Item {
+    constructor(name, id = null) {
+        this.id = id || Date.now().toString();
+        this.name = name;
+        this.createdAt = Date.now();
+        this.logs = []; // Array of {timestamp, location}
+    }
+
+    addLog(location) {
+        this.logs.push({
+            timestamp: Date.now(),
+            location: location
+        });
+    }
+
+    getTotalLosses() {
+        return this.logs.length;
+    }
+
+    getLocationFrequency() {
+        const freq = {};
+        this.logs.forEach(log => {
+            freq[log.location] = (freq[log.location] || 0) + 1;
+        });
+        return freq;
+    }
+
+    getTopLocations(limit = 3) {
+        const freq = this.getLocationFrequency();
+        return Object.entries(freq)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, limit);
+    }
+
+    getRecentLogs(limit = 5) {
+        return [...this.logs]
+            .sort((a, b) => b.timestamp - a.timestamp)
+            .slice(0, limit);
+    }
+}
+
+// ============================================
+// STATISTICS & INSIGHTS
+// ============================================
+function getTotalLosses() {
+    return appState.items.reduce((sum, item) => sum + item.getTotalLosses(), 0);
+}
+
+function getMostLostItem() {
+    if (appState.items.length === 0) return null;
+    return appState.items.reduce((max, item) => 
+        item.getTotalLosses() > (max?.getTotalLosses() || 0) ? item : max
+    , null);
+}
+
+function getTopLocation() {
+    const allLocations = {};
+    appState.items.forEach(item => {
+        const freq = item.getLocationFrequency();
+        Object.entries(freq).forEach(([loc, count]) => {
+            allLocations[loc] = (allLocations[loc] || 0) + count;
         });
     });
     
-    // Tab Add Button
-    document.getElementById('tabAddBtn').addEventListener('click', openAddItemModal);
+    const entries = Object.entries(allLocations);
+    if (entries.length === 0) return null;
     
-    // Quick Add Button (Dashboard)
-    const quickAddBtn = document.getElementById('addItemQuick');
-    if (quickAddBtn) {
-        quickAddBtn.addEventListener('click', openAddItemModal);
+    return entries.reduce((max, curr) => curr[1] > max[1] ? curr : max)[0];
+}
+
+function generateInsight() {
+    const totalLosses = getTotalLosses();
+    const itemCount = appState.items.length;
+    const mostLost = getMostLostItem();
+    const topLoc = getTopLocation();
+
+    if (totalLosses === 0) {
+        return "🎯 Start tracking to unlock patterns";
     }
-    
-    // More Button
-    document.getElementById('moreBtn').addEventListener('click', openMoreModal);
-    document.getElementById('closeMoreBtn').addEventListener('click', closeMoreModal);
-    
-    // More Menu Options
-    document.getElementById('exportDataBtn').addEventListener('click', exportData);
-    document.getElementById('clearAllBtn').addEventListener('click', confirmClearAll);
-    document.getElementById('aboutBtn').addEventListener('click', showAbout);
-    
-    // Add Item Modal
-    document.getElementById('cancelAddBtn').addEventListener('click', closeAddItemModal);
-    document.getElementById('saveItemBtn').addEventListener('click', saveNewItem);
-    
-    // Found Location Modal
-    document.getElementById('cancelFoundBtn').addEventListener('click', closeFoundModal);
-    document.getElementById('saveFoundBtn').addEventListener('click', saveFoundLocation);
-    
-    // Delete Confirmation Modal
-    document.getElementById('cancelDeleteBtn').addEventListener('click', closeDeleteModal);
-    
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            const addModal = document.getElementById('addItemModal');
-            const foundModal = document.getElementById('foundModal');
-            
-            if (!addModal.classList.contains('hidden')) {
-                saveNewItem();
-            } else if (!foundModal.classList.contains('hidden')) {
-                saveFoundLocation();
-            }
+
+    if (totalLosses === 1) {
+        return "🌱 First chaos event logged! Keep tracking to see patterns emerge";
+    }
+
+    if (totalLosses < 5) {
+        return `📊 ${totalLosses} events tracked. Patterns are forming...`;
+    }
+
+    if (mostLost && topLoc) {
+        return `🔍 Your ${mostLost.name} loves hiding in ${topLoc}`;
+    }
+
+    if (mostLost) {
+        return `👑 ${mostLost.name} is your most chaotic item`;
+    }
+
+    const avgLosses = Math.round(totalLosses / itemCount);
+    return `📈 Average ${avgLosses} losses per item. You're building a chaos database!`;
+}
+
+// ============================================
+// BADGES/ACHIEVEMENTS SYSTEM
+// ============================================
+const BADGES = [
+    {
+        id: 'first_track',
+        name: 'First Step',
+        icon: '🎯',
+        condition: () => getTotalLosses() >= 1
+    },
+    {
+        id: 'five_items',
+        name: 'Collector',
+        icon: '📦',
+        condition: () => appState.items.length >= 5
+    },
+    {
+        id: 'ten_losses',
+        name: 'Chaos Novice',
+        icon: '😅',
+        condition: () => getTotalLosses() >= 10
+    },
+    {
+        id: 'fifty_losses',
+        name: 'Pattern Master',
+        icon: '🧠',
+        condition: () => getTotalLosses() >= 50
+    },
+    {
+        id: 'same_spot',
+        name: 'Creature of Habit',
+        icon: '🔄',
+        condition: () => {
+            return appState.items.some(item => {
+                const freq = item.getLocationFrequency();
+                return Object.values(freq).some(count => count >= 5);
+            });
         }
-    });
+    },
+    {
+        id: 'three_items',
+        name: 'Getting Started',
+        icon: '🌟',
+        condition: () => appState.items.length >= 3
+    }
+];
+
+function getEarnedBadges() {
+    return BADGES.filter(badge => badge.condition());
 }
 
-// ===========================================
-// SCREEN NAVIGATION
-// ===========================================
-
-function showScreen(screenName) {
-    document.querySelectorAll('.screen').forEach(screen => {
-        screen.classList.remove('active');
-    });
-    
-    const screens = {
-        'dashboard': 'dashboardScreen',
-        'items': 'itemsScreen',
-        'stats': 'statsScreen',
-        'detail': 'itemDetailScreen'
-    };
-    
-    const screenId = screens[screenName];
-    if (screenId) {
-        document.getElementById(screenId).classList.add('active');
-    }
-    
-    AppState.currentScreen = screenName;
-    
-    // Render appropriate content
-    if (screenName === 'dashboard') {
-        renderDashboard();
-    } else if (screenName === 'items') {
-        renderItemsGrid();
-    } else if (screenName === 'stats') {
-        renderStats();
-    } else if (screenName === 'detail') {
-        renderItemDetail();
-    }
-}
-
-function updateActiveTab(screenName) {
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    const activeTab = document.querySelector(`.tab-btn[data-screen="${screenName}"]`);
-    if (activeTab) {
-        activeTab.classList.add('active');
-    }
-}
-
-// ===========================================
-// DASHBOARD RENDERING
-// ===========================================
+// ============================================
+// UI RENDERING
+// ============================================
 
 function renderDashboard() {
-    const items = Object.keys(AppState.data.items);
-    const totalLosses = calculateTotalLosses();
-    
-    // Update hero stat
-    document.getElementById('heroTotalLosses').textContent = totalLosses;
+    // Update hero number
+    document.getElementById('heroTotalLosses').textContent = getTotalLosses();
     
     // Update insight
-    updateTodayInsight();
-    
-    // Render dashboard items list
-    const dashboardList = document.getElementById('dashboardItemsList');
-    const dashboardEmpty = document.getElementById('dashboardEmpty');
-    
-    if (items.length === 0) {
-        dashboardList.innerHTML = '';
-        dashboardEmpty.style.display = 'flex';
-    } else {
-        dashboardEmpty.style.display = 'none';
-        dashboardList.innerHTML = items.slice(0, 5).map(itemName => {
-            const item = AppState.data.items[itemName];
-            const advice = getContextualAdvice(item);
-            return `
-                <div class="dashboard-item-card neo-card" onclick="openItemDetailFromDashboard('${itemName}')">
-                    <div class="dashboard-item-info">
-                        <div class="dashboard-item-name">${itemName}</div>
-                        <div class="dashboard-item-stat">${advice}</div>
-                    </div>
-                    <div class="dashboard-item-arrow">→</div>
-                </div>
-            `;
-        }).join('');
-    }
-}
-
-function updateTodayInsight() {
-    const items = Object.keys(AppState.data.items);
     const insightCard = document.getElementById('todayInsight');
+    insightCard.querySelector('.insight-text').textContent = generateInsight();
     
-    if (items.length === 0) {
-        insightCard.innerHTML = `
-            <div class="insight-icon">💡</div>
-            <div class="insight-text">Start tracking to unlock patterns</div>
-        `;
-        return;
-    }
+    // Render recent items (max 5)
+    const itemsList = document.getElementById('dashboardItemsList');
+    const emptyState = document.getElementById('dashboardEmpty');
     
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const todayName = days[new Date().getDay()];
-    
-    // Find items with day-specific patterns for today
-    let bestMatch = null;
-    let bestCount = 0;
-    
-    items.forEach(itemName => {
-        const item = AppState.data.items[itemName];
-        const todayLogs = (item.logs || []).filter(log => 
-            log.foundAt && new Date(log.foundAt).getDay() === new Date().getDay()
-        );
-        
-        if (todayLogs.length > bestCount) {
-            bestCount = todayLogs.length;
-            bestMatch = itemName;
-        }
-    });
-    
-    if (bestMatch && bestCount > 1) {
-        insightCard.innerHTML = `
-            <div class="insight-icon">⚡</div>
-            <div class="insight-text">You often lose ${bestMatch} on ${todayName}s - stay alert!</div>
-        `;
+    if (appState.items.length === 0) {
+        itemsList.innerHTML = '';
+        emptyState.style.display = 'flex';
     } else {
-        const totalLosses = calculateTotalLosses();
-        if (totalLosses > 20) {
-            insightCard.innerHTML = `
-                <div class="insight-icon">🎯</div>
-                <div class="insight-text">You've logged ${totalLosses} losses - patterns are emerging!</div>
-            `;
-        } else {
-            insightCard.innerHTML = `
-                <div class="insight-icon">💡</div>
-                <div class="insight-text">Keep tracking to discover your chaos patterns</div>
-            `;
-        }
+        emptyState.style.display = 'none';
+        const recentItems = [...appState.items]
+            .sort((a, b) => {
+                const aLatest = a.logs[a.logs.length - 1]?.timestamp || a.createdAt;
+                const bLatest = b.logs[b.logs.length - 1]?.timestamp || b.createdAt;
+                return bLatest - aLatest;
+            })
+            .slice(0, 5);
+        
+        itemsList.innerHTML = recentItems.map(item => `
+            <div class="dashboard-item-card card-3d" data-item-id="${item.id}">
+                <div class="card-shine"></div>
+                <div class="dashboard-item-info">
+                    <div class="dashboard-item-name">${escapeHtml(item.name)}</div>
+                    <div class="dashboard-item-stat">Lost ${item.getTotalLosses()} time${item.getTotalLosses() !== 1 ? 's' : ''}</div>
+                </div>
+                <div class="dashboard-item-arrow">→</div>
+            </div>
+        `).join('');
+        
+        // Add click handlers
+        itemsList.querySelectorAll('.dashboard-item-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const itemId = card.dataset.itemId;
+                showItemDetail(itemId);
+            });
+        });
     }
 }
 
-function openItemDetailFromDashboard(itemName) {
-    AppState.currentItem = itemName;
-    showScreen('detail');
-    // Don't update tabs - stay on dashboard tab visually
-}
-
-// ===========================================
-// ITEMS GRID RENDERING
-// ===========================================
-
-function renderItemsGrid() {
+function renderItemsScreen() {
     const itemsList = document.getElementById('itemsList');
     const emptyState = document.getElementById('emptyState');
-    const items = Object.keys(AppState.data.items);
+    const itemsCount = document.getElementById('itemsCount');
     
-    if (items.length === 0) {
-        emptyState.style.display = 'flex';
+    itemsCount.textContent = `${appState.items.length} item${appState.items.length !== 1 ? 's' : ''}`;
+    
+    if (appState.items.length === 0) {
         itemsList.classList.add('hidden');
-        return;
-    }
-    
-    emptyState.style.display = 'none';
-    itemsList.classList.remove('hidden');
-    
-    // Generate emoji for each item (simple hash-based selection)
-    const emojis = ['🔑', '💼', '📱', '👓', '🎒', '⌚', '🎧', '💳', '📔', '🔌'];
-    
-    itemsList.innerHTML = items.map(itemName => {
-        const item = AppState.data.items[itemName];
-        const emojiIndex = itemName.length % emojis.length;
-        const emoji = emojis[emojiIndex];
-        
-        return `
-            <div class="item-card-grid neo-card" onclick="openItemDetail('${itemName}')">
-                <div class="item-emoji">${emoji}</div>
-                <div class="item-card-name">${itemName}</div>
-                <div class="item-card-count">Lost ${item.totalLost}x</div>
-            </div>
-        `;
-    }).join('');
-}
-
-// ===========================================
-// ITEM MANAGEMENT
-// ===========================================
-
-function openAddItemModal() {
-    document.getElementById('addItemModal').classList.remove('hidden');
-    document.getElementById('itemNameInput').value = '';
-    setTimeout(() => document.getElementById('itemNameInput').focus(), 100);
-}
-
-function closeAddItemModal() {
-    document.getElementById('addItemModal').classList.add('hidden');
-}
-
-function saveNewItem() {
-    const input = document.getElementById('itemNameInput');
-    const itemName = input.value.trim();
-    
-    if (!itemName) {
-        showToast('Please enter an item name');
-        return;
-    }
-    
-    if (AppState.data.items[itemName]) {
-        showToast('Item already exists');
-        return;
-    }
-    
-    AppState.data.items[itemName] = {
-        totalLost: 0,
-        locations: {},
-        logs: []
-    };
-    
-    saveData();
-    closeAddItemModal();
-    render();
-    showToast(`${itemName} added ✨`);
-}
-
-function openItemDetail(itemName) {
-    AppState.currentItem = itemName;
-    showScreen('detail');
-    updateActiveTab('items'); // Keep items tab active
-}
-
-function handleLostItem() {
-    if (!AppState.currentItem) return;
-    
-    const item = AppState.data.items[AppState.currentItem];
-    item.totalLost++;
-    
-    const log = {
-        lostAt: new Date().toISOString(),
-        foundAt: null,
-        location: null
-    };
-    item.logs.unshift(log);
-    
-    saveData();
-    showToast('Logged as lost 😅');
-    openFoundModal();
-}
-
-function openFoundModal() {
-    document.getElementById('foundModal').classList.remove('hidden');
-    document.getElementById('locationInput').value = '';
-    setTimeout(() => document.getElementById('locationInput').focus(), 100);
-}
-
-function closeFoundModal() {
-    document.getElementById('foundModal').classList.add('hidden');
-}
-
-function saveFoundLocation() {
-    const location = document.getElementById('locationInput').value.trim();
-    
-    if (!location) {
-        showToast('Please enter a location');
-        return;
-    }
-    
-    const item = AppState.data.items[AppState.currentItem];
-    
-    if (item.logs.length > 0) {
-        item.logs[0].foundAt = new Date().toISOString();
-        item.logs[0].location = location;
-    }
-    
-    if (!item.locations[location]) {
-        item.locations[location] = 0;
-    }
-    item.locations[location]++;
-    
-    saveData();
-    closeFoundModal();
-    renderItemDetail();
-    showToast(`Found at ${location} 🎉`);
-}
-
-function openDeleteModal() {
-    document.getElementById('deleteModal').classList.remove('hidden');
-    
-    // Attach button listeners
-    document.getElementById('confirmDeleteBtn').onclick = confirmDelete;
-}
-
-function closeDeleteModal() {
-    document.getElementById('deleteModal').classList.add('hidden');
-}
-
-function confirmDelete() {
-    if (!AppState.currentItem) return;
-    
-    delete AppState.data.items[AppState.currentItem];
-    saveData();
-    closeDeleteModal();
-    showScreen('dashboard');
-    updateActiveTab('dashboard');
-    showToast('Item deleted');
-}
-
-// ===========================================
-// ITEM DETAIL RENDERING
-// ===========================================
-
-function renderItemDetail() {
-    if (!AppState.currentItem) return;
-    
-    const item = AppState.data.items[AppState.currentItem];
-    
-    // Attach back button listener
-    document.getElementById('backFromDetail').onclick = () => {
-        showScreen('items');
-        updateActiveTab('items');
-    };
-    
-    // Attach delete button listener
-    document.getElementById('deleteItemBtn').onclick = openDeleteModal;
-    
-    // Attach lost button listener
-    document.getElementById('lostBtn').onclick = handleLostItem;
-    
-    // Update title
-    document.getElementById('itemDetailTitle').textContent = AppState.currentItem;
-    
-    // Update stats
-    document.getElementById('detailTotalLost').textContent = item.totalLost;
-    
-    // Render predictions
-    const predictions = getTopPredictions(item, 5);
-    const predictionsList = document.getElementById('predictionsList');
-    
-    if (predictions.length === 0) {
-        predictionsList.innerHTML = '<div class="no-logs">No predictions yet. Log some losses first!</div>';
+        emptyState.style.display = 'flex';
     } else {
-        predictionsList.innerHTML = predictions.map((pred, idx) => `
-            <div class="prediction-item-neo neo-card">
-                <div class="prediction-left">
-                    <div class="prediction-rank-neo">${idx + 1}</div>
-                    <div class="prediction-location-neo">${pred.location}</div>
+        emptyState.style.display = 'none';
+        itemsList.classList.remove('hidden');
+        
+        itemsList.innerHTML = appState.items.map((item, index) => `
+            <div class="item-card-grid-ultimate card-3d" data-item-id="${item.id}" style="animation-delay: ${index * 0.1}s">
+                <div class="card-shine"></div>
+                <div class="item-icon-ultimate">
+                    ${getItemEmoji(item.name)}
                 </div>
-                <div class="prediction-count-neo">${pred.count}x</div>
+                <div class="item-card-name">${escapeHtml(item.name)}</div>
+                <div class="item-card-count">${item.getTotalLosses()} losses</div>
             </div>
         `).join('');
-    }
-    
-    // Render logs
-    const logsList = document.getElementById('logsList');
-    const recentLogs = item.logs.slice(0, 10);
-    
-    if (recentLogs.length === 0) {
-        logsList.innerHTML = '<div class="no-logs">No history yet</div>';
-    } else {
-        logsList.innerHTML = recentLogs.map(log => `
-            <div class="log-item-neo neo-card">
-                <div class="log-location-neo">${log.location || 'Lost (not found yet)'}</div>
-                <div class="log-time-neo">${formatDate(log.lostAt)}</div>
-            </div>
-        `).join('');
+        
+        // Add click handlers
+        itemsList.querySelectorAll('.item-card-grid-ultimate').forEach(card => {
+            card.addEventListener('click', () => {
+                const itemId = card.dataset.itemId;
+                showItemDetail(itemId);
+            });
+        });
     }
 }
 
-// ===========================================
-// STATS RENDERING
-// ===========================================
-
-function renderStats() {
-    let totalLosses = 0;
-    let mostLostItem = null;
-    let maxLosses = 0;
-    const allLocations = {};
+function renderStatsScreen() {
+    // Total losses
+    document.getElementById('totalLosses').textContent = getTotalLosses();
     
-    Object.keys(AppState.data.items).forEach(itemName => {
-        const item = AppState.data.items[itemName];
-        totalLosses += item.totalLost;
-        
-        if (item.totalLost > maxLosses) {
-            maxLosses = item.totalLost;
-            mostLostItem = itemName;
-        }
-        
-        Object.keys(item.locations).forEach(loc => {
-            if (!allLocations[loc]) allLocations[loc] = 0;
-            allLocations[loc] += item.locations[loc];
-        });
-    });
+    // Most lost item
+    const mostLost = getMostLostItem();
+    document.getElementById('mostLostItem').textContent = mostLost ? escapeHtml(mostLost.name) : '—';
     
-    document.getElementById('totalLosses').textContent = totalLosses;
-    document.getElementById('mostLostItem').textContent = mostLostItem || '—';
+    // Top location
+    const topLoc = getTopLocation();
+    document.getElementById('topLocation').textContent = topLoc ? escapeHtml(topLoc) : '—';
     
-    let topLocation = '—';
-    let maxCount = 0;
-    Object.keys(allLocations).forEach(loc => {
-        if (allLocations[loc] > maxCount) {
-            maxCount = allLocations[loc];
-            topLocation = loc;
-        }
-    });
-    document.getElementById('topLocation').textContent = topLocation;
-    
-    // Render badges
+    // Badges
     const badgesGrid = document.getElementById('badgesGrid');
+    const earnedBadges = getEarnedBadges();
+    
     badgesGrid.innerHTML = BADGES.map(badge => {
-        const earned = totalLosses >= badge.requirement;
+        const earned = earnedBadges.some(b => b.id === badge.id);
         return `
-            <div class="badge-neo neo-card ${earned ? 'earned' : ''}">
-                <div class="badge-icon">${badge.icon}</div>
+            <div class="badge-ultimate card-3d ${earned ? 'earned' : ''}">
+                <div class="card-shine"></div>
+                <span class="badge-icon">${badge.icon}</span>
                 <div class="badge-name">${badge.name}</div>
             </div>
         `;
     }).join('');
 }
 
-// ===========================================
-// MORE MENU
-// ===========================================
-
-function openMoreModal() {
-    document.getElementById('moreModal').classList.remove('hidden');
-}
-
-function closeMoreModal() {
-    document.getElementById('moreModal').classList.add('hidden');
-}
-
-function exportData() {
-    const dataStr = JSON.stringify(AppState.data, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `unearth-backup-${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
+function renderItemDetail(itemId) {
+    const item = appState.items.find(i => i.id === itemId);
+    if (!item) {
+        showToast('Item not found');
+        switchScreen('dashboard');
+        return;
+    }
     
-    closeMoreModal();
-    showToast('Data exported! 💾');
-}
-
-function confirmClearAll() {
-    if (confirm('⚠️ This will delete ALL your data. Are you sure?')) {
-        AppState.data = { items: {} };
-        saveData();
-        closeMoreModal();
-        render();
-        showToast('All data cleared');
+    // Set title
+    document.getElementById('itemDetailTitle').textContent = item.name;
+    
+    // Total lost count
+    document.getElementById('detailTotalLost').textContent = item.getTotalLosses();
+    
+    // Predictions (top locations)
+    const predictionsList = document.getElementById('predictionsList');
+    const topLocations = item.getTopLocations(3);
+    
+    if (topLocations.length === 0) {
+        predictionsList.innerHTML = '<div class="no-logs">No patterns yet. Log your first loss!</div>';
+    } else {
+        predictionsList.innerHTML = topLocations.map(([location, count], index) => `
+            <div class="prediction-item-ultimate card-3d" style="animation-delay: ${index * 0.1}s">
+                <div class="card-shine"></div>
+                <div class="prediction-rank">${index + 1}</div>
+                <div class="prediction-location">${escapeHtml(location)}</div>
+                <div class="prediction-count">${count}×</div>
+            </div>
+        `).join('');
+    }
+    
+    // Recent logs
+    const logsList = document.getElementById('logsList');
+    const recentLogs = item.getRecentLogs(5);
+    
+    if (recentLogs.length === 0) {
+        logsList.innerHTML = '<div class="no-logs">No history yet</div>';
+    } else {
+        logsList.innerHTML = recentLogs.map((log, index) => `
+            <div class="log-item-ultimate card-3d" style="animation-delay: ${index * 0.1}s">
+                <div class="card-shine"></div>
+                <div class="log-location">${escapeHtml(log.location)}</div>
+                <div class="log-time">${formatTimeAgo(log.timestamp)}</div>
+            </div>
+        `).join('');
     }
 }
 
-function showAbout() {
-    alert(`Unearth v2.0
-    
-Pattern-Driven Chaos Companion
-
-Built with ❤️ for the chronically disorganized.
-
-Your data stays private - stored only on your device.
-
-GitHub: github.com/yourusername/unearth`);
-}
-
-// ===========================================
-// PREDICTION LOGIC
-// ===========================================
-
-function getTopPredictions(item, limit = 3) {
-    const locations = item.locations;
-    const predictions = Object.keys(locations).map(location => ({
-        location,
-        count: locations[location]
-    }));
-    
-    predictions.sort((a, b) => b.count - a.count);
-    return predictions.slice(0, limit);
-}
-
-// ===========================================
-// UTILITIES
-// ===========================================
-
-function calculateTotalLosses() {
-    let total = 0;
-    Object.keys(AppState.data.items).forEach(itemName => {
-        total += AppState.data.items[itemName].totalLost;
+// ============================================
+// SCREEN NAVIGATION
+// ============================================
+function switchScreen(screenName) {
+    // Hide all screens
+    document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.remove('active');
     });
-    return total;
+    
+    // Show target screen
+    const targetScreen = document.getElementById(`${screenName}Screen`);
+    if (targetScreen) {
+        targetScreen.classList.add('active');
+        appState.currentScreen = screenName;
+        
+        // Update nav buttons
+        document.querySelectorAll('.nav-btn[data-screen]').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        const activeBtn = document.querySelector(`.nav-btn[data-screen="${screenName}"]`);
+        if (activeBtn) {
+            activeBtn.classList.add('active');
+        }
+        
+        // Render screen content
+        switch(screenName) {
+            case 'dashboard':
+                renderDashboard();
+                break;
+            case 'items':
+                renderItemsScreen();
+                break;
+            case 'stats':
+                renderStatsScreen();
+                break;
+        }
+    }
 }
 
-function formatDate(isoString) {
-    const date = new Date(isoString);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-    
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    
-    return date.toLocaleDateString();
+function showItemDetail(itemId) {
+    appState.currentItemId = itemId;
+    document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.remove('active');
+    });
+    document.getElementById('itemDetailScreen').classList.add('active');
+    renderItemDetail(itemId);
 }
 
+// ============================================
+// MODALS
+// ============================================
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('hidden');
+        // Focus input if exists
+        const input = modal.querySelector('input[type="text"]');
+        if (input) {
+            setTimeout(() => input.focus(), 100);
+        }
+    }
+}
+
+function hideModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('hidden');
+        // Clear inputs
+        modal.querySelectorAll('input[type="text"]').forEach(input => {
+            input.value = '';
+        });
+    }
+}
+
+// ============================================
+// ITEM MANAGEMENT
+// ============================================
+function addItem(name) {
+    if (!name || name.trim() === '') {
+        showToast('Please enter an item name');
+        return false;
+    }
+    
+    const trimmedName = name.trim();
+    
+    // Check for duplicates
+    if (appState.items.some(item => item.name.toLowerCase() === trimmedName.toLowerCase())) {
+        showToast('Item already exists');
+        return false;
+    }
+    
+    const newItem = new Item(trimmedName);
+    appState.items.push(newItem);
+    saveData();
+    
+    showToast(`${trimmedName} added!`);
+    return true;
+}
+
+function deleteItem(itemId) {
+    const index = appState.items.findIndex(item => item.id === itemId);
+    if (index !== -1) {
+        const itemName = appState.items[index].name;
+        appState.items.splice(index, 1);
+        saveData();
+        showToast(`${itemName} deleted`);
+        return true;
+    }
+    return false;
+}
+
+function addLogToItem(itemId, location) {
+    const item = appState.items.find(i => i.id === itemId);
+    if (!item) {
+        showToast('Item not found');
+        return false;
+    }
+    
+    if (!location || location.trim() === '') {
+        showToast('Please enter a location');
+        return false;
+    }
+    
+    item.addLog(location.trim());
+    saveData();
+    
+    // Trigger confetti
+    triggerConfetti();
+    showToast('Pattern saved! 🎉');
+    return true;
+}
+
+// ============================================
+// UI HELPERS
+// ============================================
 function showToast(message) {
     const toast = document.getElementById('toast');
-    toast.textContent = message;
+    const toastText = document.getElementById('toastText');
+    
+    toastText.textContent = message;
     toast.classList.remove('hidden');
     
     setTimeout(() => {
         toast.classList.add('hidden');
-    }, 2500);
+    }, 3000);
 }
 
-function render() {
-    if (AppState.currentScreen === 'dashboard') {
-        renderDashboard();
-    } else if (AppState.currentScreen === 'items') {
-        renderItemsGrid();
-    } else if (AppState.currentScreen === 'stats') {
-        renderStats();
-    } else if (AppState.currentScreen === 'detail') {
-        renderItemDetail();
+function triggerConfetti() {
+    const container = document.getElementById('confettiContainer');
+    const colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#10b981'];
+    
+    for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.animationDelay = Math.random() * 0.5 + 's';
+        confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+        container.appendChild(confetti);
+        
+        setTimeout(() => confetti.remove(), 3500);
     }
 }
 
-// ===========================================
-// SERVICE WORKER REGISTRATION
-// ===========================================
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
+function formatTimeAgo(timestamp) {
+    const seconds = Math.floor((Date.now() - timestamp) / 1000);
+    
+    if (seconds < 60) return 'Just now';
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+    
+    return new Date(timestamp).toLocaleDateString();
+}
+
+function getItemEmoji(name) {
+    const nameLower = name.toLowerCase();
+    
+    // Common items
+    if (nameLower.includes('key')) return '🔑';
+    if (nameLower.includes('phone')) return '📱';
+    if (nameLower.includes('wallet')) return '👛';
+    if (nameLower.includes('remote')) return '📺';
+    if (nameLower.includes('glasses') || nameLower.includes('sunglass')) return '👓';
+    if (nameLower.includes('charger')) return '🔌';
+    if (nameLower.includes('headphone') || nameLower.includes('earbud')) return '🎧';
+    if (nameLower.includes('pen')) return '🖊️';
+    if (nameLower.includes('book')) return '📚';
+    if (nameLower.includes('watch')) return '⌚';
+    if (nameLower.includes('ring')) return '💍';
+    if (nameLower.includes('shoe')) return '👟';
+    if (nameLower.includes('sock')) return '🧦';
+    if (nameLower.includes('hat') || nameLower.includes('cap')) return '🧢';
+    if (nameLower.includes('umbrella')) return '☂️';
+    if (nameLower.includes('bag') || nameLower.includes('backpack')) return '🎒';
+    if (nameLower.includes('bottle')) return '🍾';
+    if (nameLower.includes('cup') || nameLower.includes('mug')) return '☕';
+    
+    // Default
+    return '📦';
+}
+
+// ============================================
+// DARK MODE TOGGLE
+// ============================================
+function toggleDarkMode() {
+    appState.darkMode = !appState.darkMode;
+    
+    if (appState.darkMode) {
+        document.body.classList.add('dark-mode');
+    } else {
+        document.body.classList.remove('dark-mode');
+    }
+    
+    saveTheme();
+}
+
+// ============================================
+// DATA MANAGEMENT
+// ============================================
+function exportData() {
+    const data = {
+        version: '2.0',
+        exportDate: new Date().toISOString(),
+        items: appState.items
+    };
+    
+    const dataStr = JSON.stringify(data, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `unearth-backup-${Date.now()}.json`;
+    a.click();
+    
+    URL.revokeObjectURL(url);
+    showToast('Data exported!');
+}
+
+function clearAllData() {
+    if (confirm('Are you sure? This will delete ALL your items and cannot be undone.')) {
+        appState.items = [];
+        saveData();
+        showToast('All data cleared');
+        switchScreen('dashboard');
+    }
+}
+
+// ============================================
+// EVENT LISTENERS
+// ============================================
+function initEventListeners() {
+    // Theme toggle
+    document.getElementById('themeToggle')?.addEventListener('click', toggleDarkMode);
+    
+    // Navigation
+    document.querySelectorAll('.nav-btn[data-screen]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const screen = btn.dataset.screen;
+            switchScreen(screen);
+        });
+    });
+    
+    // Add item buttons
+    document.getElementById('tabAddBtn')?.addEventListener('click', () => {
+        showModal('addItemModal');
+    });
+    
+    document.getElementById('addItemQuick')?.addEventListener('click', () => {
+        showModal('addItemModal');
+    });
+    
+    // Add item modal
+    document.getElementById('saveItemBtn')?.addEventListener('click', () => {
+        const input = document.getElementById('itemNameInput');
+        if (addItem(input.value)) {
+            hideModal('addItemModal');
+            switchScreen('items');
+        }
+    });
+    
+    document.getElementById('cancelAddBtn')?.addEventListener('click', () => {
+        hideModal('addItemModal');
+    });
+    
+    // Enter key in add item modal
+    document.getElementById('itemNameInput')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            document.getElementById('saveItemBtn')?.click();
+        }
+    });
+    
+    // Item detail - back button
+    document.getElementById('backFromDetail')?.addEventListener('click', () => {
+        switchScreen('dashboard');
+    });
+    
+    // Item detail - delete button
+    document.getElementById('deleteItemBtn')?.addEventListener('click', () => {
+        showModal('deleteModal');
+    });
+    
+    // Delete modal
+    document.getElementById('confirmDeleteBtn')?.addEventListener('click', () => {
+        if (appState.currentItemId && deleteItem(appState.currentItemId)) {
+            hideModal('deleteModal');
+            switchScreen('items');
+        }
+    });
+    
+    document.getElementById('cancelDeleteBtn')?.addEventListener('click', () => {
+        hideModal('deleteModal');
+    });
+    
+    // Lost button (opens found modal)
+    document.getElementById('lostBtn')?.addEventListener('click', () => {
+        showModal('foundModal');
+    });
+    
+    // Found modal
+    document.getElementById('saveFoundBtn')?.addEventListener('click', () => {
+        const input = document.getElementById('locationInput');
+        if (appState.currentItemId && addLogToItem(appState.currentItemId, input.value)) {
+            hideModal('foundModal');
+            renderItemDetail(appState.currentItemId);
+        }
+    });
+    
+    document.getElementById('cancelFoundBtn')?.addEventListener('click', () => {
+        hideModal('foundModal');
+    });
+    
+    // Enter key in found modal
+    document.getElementById('locationInput')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            document.getElementById('saveFoundBtn')?.click();
+        }
+    });
+    
+    // More button
+    document.getElementById('moreBtn')?.addEventListener('click', () => {
+        showModal('moreModal');
+    });
+    
+    document.getElementById('closeMoreBtn')?.addEventListener('click', () => {
+        hideModal('moreModal');
+    });
+    
+    // More modal options
+    document.getElementById('exportDataBtn')?.addEventListener('click', () => {
+        exportData();
+        hideModal('moreModal');
+    });
+    
+    document.getElementById('clearAllBtn')?.addEventListener('click', () => {
+        hideModal('moreModal');
+        clearAllData();
+    });
+    
+    document.getElementById('aboutBtn')?.addEventListener('click', () => {
+        hideModal('moreModal');
+        showToast('Unearth v2.0 - Pattern-Driven Chaos Companion');
+    });
+    
+    // Close modals on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                overlay.classList.add('hidden');
+            }
+        });
+    });
+}
+
+// ============================================
+// SERVICE WORKER REGISTRATION
+// ============================================
 function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/service-worker.js')
-            .then(reg => console.log('✅ Service Worker registered'))
-            .catch(err => console.log('❌ Service Worker registration failed:', err));
+            .then(registration => {
+                console.log('Service Worker registered:', registration);
+            })
+            .catch(error => {
+                console.error('Service Worker registration failed:', error);
+            });
     }
 }
 
-// ===========================================
-// EXPORT FOR TESTING (Optional)
-// ===========================================
+// ============================================
+// URL PARAMS (for PWA shortcuts)
+// ============================================
+function handleURLParams() {
+    const params = new URLSearchParams(window.location.search);
+    const action = params.get('action');
+    
+    if (action === 'add') {
+        showModal('addItemModal');
+    } else if (action === 'stats') {
+        switchScreen('stats');
+    }
+    
+    // Clear URL params
+    if (action) {
+        window.history.replaceState({}, document.title, '/');
+    }
+}
 
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { AppState, getTopPredictions, formatDate, getContextualAdvice };
+// ============================================
+// INITIALIZATION
+// ============================================
+function init() {
+    console.log('🎯 Unearth initializing...');
+    
+    // Load saved data
+    loadData();
+    loadTheme();
+    
+    // Register service worker
+    registerServiceWorker();
+    
+    // Initialize event listeners
+    initEventListeners();
+    
+    // Handle URL params (PWA shortcuts)
+    handleURLParams();
+    
+    // Render initial screen
+    switchScreen('dashboard');
+    
+    console.log('✅ Unearth ready!');
+}
+
+// ============================================
+// START APP
+// ============================================
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
 }
