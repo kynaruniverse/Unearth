@@ -50,3 +50,4 @@
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
     Content-Type = "application/manifest+json"
+    Access-Control-Allow-Origin = "*"

@@ -20,6 +20,7 @@
 </head>
 <body>
     <div id="app">
+        <!-- Header -->
         <header class="glass-header">
             <div class="header-content">
                 <h1 class="logo-text">Unearth<span class="dot">.</span></h1>
@@ -27,6 +28,7 @@
             </div>
         </header>
 
+        <!-- Main Screen: Items List -->
         <main id="mainScreen" class="screen active">
             <div id="emptyState" class="empty-state">
                 <div class="empty-icon">🔍</div>
@@ -35,18 +37,20 @@
                 <p class="hint">Keys, wallet, phone, glasses...</p>
             </div>
 
-            <div id="itemsList" class="items-list hidden">
-                </div>
+            <div id="itemsList" class="items-list hidden"></div>
 
+            <!-- Add Item FAB -->
             <div id="addItemBtn" class="fab-portal">
                 <div class="fab-inner">+</div>
             </div>
         </main>
 
+        <!-- Stats Screen -->
         <main id="statsScreen" class="screen">
             <div class="screen-header">
                 <button class="back-btn" id="backFromStats" aria-label="Back">←</button>
                 <h2>Your Patterns</h2>
+                <div class="spacer"></div>
             </div>
 
             <div class="stats-container">
@@ -75,11 +79,12 @@
             </div>
         </main>
 
+        <!-- Item Detail Screen -->
         <main id="itemDetailScreen" class="screen">
             <div class="screen-header">
                 <button class="back-btn" id="backFromDetail" aria-label="Back">←</button>
                 <h2 id="itemDetailTitle">Item</h2>
-                <button class="icon-btn-danger" id="deleteItemBtn">🗑️</button>
+                <button class="icon-btn-danger" id="deleteItemBtn" aria-label="Delete Item">🗑️</button>
             </div>
 
             <div class="detail-container">
@@ -105,10 +110,11 @@
             </div>
         </main>
 
+        <!-- Add Item Modal -->
         <div id="addItemModal" class="modal-overlay hidden">
             <div class="modal-sheet">
                 <h3>Track New Item</h3>
-                <input type="text" id="itemNameInput" placeholder="What did you lose?" maxlength="30">
+                <input type="text" id="itemNameInput" placeholder="What did you lose?" maxlength="30" autocomplete="off">
                 <div class="modal-actions">
                     <button id="cancelAddBtn" class="btn-text">Cancel</button>
                     <button id="saveItemBtn" class="btn-primary">Start Tracking</button>
@@ -116,11 +122,12 @@
             </div>
         </div>
 
+        <!-- Found Location Modal -->
         <div id="foundModal" class="modal-overlay hidden">
             <div class="modal-sheet">
                 <h3>Found it!</h3>
-                <p>Where was it hiding?</p>
-                <input type="text" id="locationInput" placeholder="e.g. Under the couch">
+                <p class="modal-desc">Where was it hiding?</p>
+                <input type="text" id="locationInput" placeholder="e.g. Under the couch" maxlength="30" autocomplete="off">
                 <div class="modal-actions">
                     <button id="cancelFoundBtn" class="btn-text">Cancel</button>
                     <button id="saveFoundBtn" class="btn-primary">Save Pattern</button>
@@ -128,6 +135,7 @@
             </div>
         </div>
 
+        <!-- Delete Confirmation Modal -->
         <div id="deleteModal" class="modal-overlay hidden">
             <div class="modal-sheet">
                 <h3>Erase Data?</h3>
@@ -139,6 +147,7 @@
             </div>
         </div>
 
+        <!-- Toast Notification -->
         <div id="toast" class="toast hidden"></div>
     </div>
 

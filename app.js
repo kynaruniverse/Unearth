@@ -254,7 +254,6 @@ function saveFoundLocation() {
     item.locations[location]++;
     
     saveData();
-    renderItemsList();
     closeFoundModal();
     renderItemDetail();
     showToast(`Found at ${location}`);

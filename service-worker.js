@@ -5,7 +5,9 @@ const ASSETS_TO_CACHE = [
   '/index.html',
   '/style.css',
   '/app.js',
-  '/manifest.json'
+  '/manifest.json',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png'
 ];
 
 // 1. Install Event: Populate the cache immediately
@@ -43,7 +45,7 @@ self.addEventListener('fetch', (event) => {
           }
           return networkResponse;
         }).catch(() => {
-            // If offline and not in cache, you could return a custom offline page here
+            return cachedResponse;
         });
 
         // Return the cached version immediately (speed) 
