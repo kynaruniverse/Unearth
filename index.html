@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=0">
     <meta name="description" content="Unearth - Pattern-Driven Chaos Companion">
     
-    <meta name="theme-color" content="#020617">
+    <meta name="theme-color" content="#6366f1">
     
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="/icons/icon-192.png">
@@ -21,15 +21,60 @@
 <body>
     <div id="app">
         <!-- Header -->
-        <header class="glass-header">
+        <header class="neo-header">
             <div class="header-content">
-                <h1 class="logo-text">Unearth<span class="dot">.</span></h1>
-                <button id="statsBtn" class="blur-btn" aria-label="View Stats">📊</button>
+                <h1 class="logo-gradient">Unearth<span class="sparkle">✨</span></h1>
+                <div class="header-actions">
+                    <button id="exportBtn" class="neo-icon-btn" aria-label="Export Data">💾</button>
+                </div>
             </div>
         </header>
 
-        <!-- Main Screen: Items List -->
-        <main id="mainScreen" class="screen active">
+        <!-- Dashboard Screen -->
+        <main id="dashboardScreen" class="screen active">
+            <!-- Quick Stats Summary -->
+            <div class="dashboard-hero">
+                <div class="hero-card neo-card">
+                    <div class="hero-icon">🎯</div>
+                    <div class="hero-stats">
+                        <div class="hero-number" id="heroTotalLosses">0</div>
+                        <div class="hero-label">Total Chaos Events</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Insight Cards -->
+            <div class="insights-section">
+                <h2 class="section-title">Today's Insights</h2>
+                <div class="insight-card neo-card" id="todayInsight">
+                    <div class="insight-icon">💡</div>
+                    <div class="insight-text">Start tracking to unlock patterns</div>
+                </div>
+            </div>
+
+            <!-- Recent Items -->
+            <div class="recent-section">
+                <div class="section-header">
+                    <h2 class="section-title">Your Items</h2>
+                    <button id="addItemQuick" class="neo-btn-small">+ Add</button>
+                </div>
+                <div id="dashboardItemsList" class="dashboard-items"></div>
+                
+                <!-- Empty State -->
+                <div id="dashboardEmpty" class="empty-state">
+                    <div class="empty-icon">🔍</div>
+                    <h3>No items yet</h3>
+                    <p>Tap + Add to start tracking</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Items List Screen -->
+        <main id="itemsScreen" class="screen">
+            <div class="screen-top">
+                <h2 class="screen-title">All Items</h2>
+            </div>
+
             <div id="emptyState" class="empty-state">
                 <div class="empty-icon">🔍</div>
                 <h2>Start tracking</h2>
@@ -37,118 +82,157 @@
                 <p class="hint">Keys, wallet, phone, glasses...</p>
             </div>
 
-            <div id="itemsList" class="items-list hidden"></div>
-
-            <!-- Add Item FAB -->
-            <div id="addItemBtn" class="fab-portal">
-                <div class="fab-inner">+</div>
-            </div>
+            <div id="itemsList" class="items-grid hidden"></div>
         </main>
 
         <!-- Stats Screen -->
         <main id="statsScreen" class="screen">
-            <div class="screen-header">
-                <button class="back-btn" id="backFromStats" aria-label="Back">←</button>
-                <h2>Your Patterns</h2>
-                <div class="spacer"></div>
+            <div class="screen-top">
+                <h2 class="screen-title">Your Patterns</h2>
             </div>
 
             <div class="stats-container">
-                <div class="stats-grid">
-                    <div class="stat-card">
+                <div class="stats-grid-enhanced">
+                    <div class="stat-card-neo neo-card">
                         <div class="stat-icon">😅</div>
                         <div class="stat-label">Total Losses</div>
-                        <div class="stat-value" id="totalLosses">0</div>
+                        <div class="stat-value gradient-text" id="totalLosses">0</div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card-neo neo-card">
                         <div class="stat-icon">👑</div>
                         <div class="stat-label">Most Chaotic</div>
-                        <div class="stat-value" id="mostLostItem">—</div>
+                        <div class="stat-value gradient-text" id="mostLostItem">—</div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card-neo neo-card">
                         <div class="stat-icon">📍</div>
                         <div class="stat-label">Top Hiding Spot</div>
-                        <div class="stat-value" id="topLocation">—</div>
+                        <div class="stat-value gradient-text" id="topLocation">—</div>
                     </div>
                 </div>
 
                 <div class="badges-section">
-                    <h3>Achievements</h3>
-                    <div class="badges-grid" id="badgesGrid"></div>
+                    <h3 class="section-title">Achievements</h3>
+                    <div class="badges-grid-neo" id="badgesGrid"></div>
                 </div>
             </div>
         </main>
 
         <!-- Item Detail Screen -->
         <main id="itemDetailScreen" class="screen">
-            <div class="screen-header">
-                <button class="back-btn" id="backFromDetail" aria-label="Back">←</button>
-                <h2 id="itemDetailTitle">Item</h2>
-                <button class="icon-btn-danger" id="deleteItemBtn" aria-label="Delete Item">🗑️</button>
+            <div class="detail-header neo-card">
+                <button class="neo-back-btn" id="backFromDetail" aria-label="Back">←</button>
+                <h2 id="itemDetailTitle" class="detail-title gradient-text">Item</h2>
+                <button class="neo-danger-btn" id="deleteItemBtn" aria-label="Delete Item">🗑️</button>
             </div>
 
             <div class="detail-container">
-                <div class="stat-pill">
-                    <span>Lost <strong id="detailTotalLost">0</strong> times</span>
+                <div class="stat-pill-neo neo-card">
+                    <span>Lost <strong id="detailTotalLost" class="gradient-text">0</strong> times</span>
                 </div>
 
                 <div class="predictions-section">
-                    <h3>Contextual Predictions</h3>
-                    <div id="predictionsList" class="predictions-list"></div>
+                    <h3 class="section-title">Most Likely Here</h3>
+                    <div id="predictionsList" class="predictions-list-neo"></div>
                 </div>
 
                 <div class="action-buttons">
-                    <button class="btn-lost-main" id="lostBtn">
-                        😰 I LOST IT AGAIN
+                    <button class="btn-lost-neo neo-card" id="lostBtn">
+                        <span class="btn-icon">😰</span>
+                        <span class="btn-text">I LOST IT AGAIN</span>
                     </button>
                 </div>
 
                 <div class="logs-section">
-                    <h3>Recent History</h3>
-                    <div id="logsList" class="logs-list"></div>
+                    <h3 class="section-title">Recent History</h3>
+                    <div id="logsList" class="logs-list-neo"></div>
                 </div>
             </div>
         </main>
 
+        <!-- Bottom Tab Bar -->
+        <nav class="bottom-tabs neo-card">
+            <button class="tab-btn active" data-screen="dashboard">
+                <span class="tab-icon">🏠</span>
+                <span class="tab-label">Home</span>
+            </button>
+            <button class="tab-btn" data-screen="items">
+                <span class="tab-icon">📦</span>
+                <span class="tab-label">Items</span>
+            </button>
+            <button class="tab-btn tab-add" id="tabAddBtn">
+                <span class="tab-icon-large">+</span>
+            </button>
+            <button class="tab-btn" data-screen="stats">
+                <span class="tab-icon">📊</span>
+                <span class="tab-label">Stats</span>
+            </button>
+            <button class="tab-btn" id="moreBtn">
+                <span class="tab-icon">⚡</span>
+                <span class="tab-label">More</span>
+            </button>
+        </nav>
+
         <!-- Add Item Modal -->
         <div id="addItemModal" class="modal-overlay hidden">
-            <div class="modal-sheet">
-                <h3>Track New Item</h3>
-                <input type="text" id="itemNameInput" placeholder="What did you lose?" maxlength="30" autocomplete="off">
+            <div class="modal-neo neo-card">
+                <h3 class="modal-title gradient-text">Track New Item</h3>
+                <input type="text" id="itemNameInput" class="neo-input" placeholder="What did you lose?" maxlength="30" autocomplete="off">
                 <div class="modal-actions">
-                    <button id="cancelAddBtn" class="btn-text">Cancel</button>
-                    <button id="saveItemBtn" class="btn-primary">Start Tracking</button>
+                    <button id="cancelAddBtn" class="btn-secondary-neo">Cancel</button>
+                    <button id="saveItemBtn" class="btn-primary-neo">Start Tracking</button>
                 </div>
             </div>
         </div>
 
         <!-- Found Location Modal -->
         <div id="foundModal" class="modal-overlay hidden">
-            <div class="modal-sheet">
-                <h3>Found it!</h3>
+            <div class="modal-neo neo-card">
+                <h3 class="modal-title gradient-text">Found it! 🎉</h3>
                 <p class="modal-desc">Where was it hiding?</p>
-                <input type="text" id="locationInput" placeholder="e.g. Under the couch" maxlength="30" autocomplete="off">
+                <input type="text" id="locationInput" class="neo-input" placeholder="e.g. Under the couch" maxlength="30" autocomplete="off">
                 <div class="modal-actions">
-                    <button id="cancelFoundBtn" class="btn-text">Cancel</button>
-                    <button id="saveFoundBtn" class="btn-primary">Save Pattern</button>
+                    <button id="cancelFoundBtn" class="btn-secondary-neo">Cancel</button>
+                    <button id="saveFoundBtn" class="btn-primary-neo">Save Pattern</button>
                 </div>
             </div>
         </div>
 
         <!-- Delete Confirmation Modal -->
         <div id="deleteModal" class="modal-overlay hidden">
-            <div class="modal-sheet">
-                <h3>Erase Data?</h3>
+            <div class="modal-neo neo-card">
+                <h3 class="modal-title gradient-text">Erase Data?</h3>
                 <p class="warning-text">This will delete all logs for this item.</p>
                 <div class="modal-actions">
-                    <button id="cancelDeleteBtn" class="btn-text">Cancel</button>
-                    <button id="confirmDeleteBtn" class="btn-danger">Delete Forever</button>
+                    <button id="cancelDeleteBtn" class="btn-secondary-neo">Cancel</button>
+                    <button id="confirmDeleteBtn" class="btn-danger-neo">Delete Forever</button>
                 </div>
             </div>
         </div>
 
+        <!-- More Menu Modal -->
+        <div id="moreModal" class="modal-overlay hidden">
+            <div class="modal-neo neo-card">
+                <h3 class="modal-title gradient-text">More Options</h3>
+                <div class="menu-options">
+                    <button class="menu-option neo-card" id="exportDataBtn">
+                        <span class="menu-icon">💾</span>
+                        <span class="menu-label">Export Data</span>
+                    </button>
+                    <button class="menu-option neo-card" id="clearAllBtn">
+                        <span class="menu-icon">🗑️</span>
+                        <span class="menu-label">Clear All Data</span>
+                    </button>
+                    <button class="menu-option neo-card" id="aboutBtn">
+                        <span class="menu-icon">ℹ️</span>
+                        <span class="menu-label">About</span>
+                    </button>
+                </div>
+                <button id="closeMoreBtn" class="btn-secondary-neo full-width">Close</button>
+            </div>
+        </div>
+
         <!-- Toast Notification -->
-        <div id="toast" class="toast hidden"></div>
+        <div id="toast" class="toast-neo neo-card hidden"></div>
     </div>
 
     <script src="app.js"></script>
