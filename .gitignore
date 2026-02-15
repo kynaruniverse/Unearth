@@ -1,0 +1,52 @@
+# Unearth .gitignore
+# Files and folders to exclude from Git
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.spck/
+
+# Node modules (if you add any later)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs (for future)
+dist/
+build/
+.cache/
+
+# Environment variables (for V2+)
+.env
+.env.local
+.env.production
+
+# Log files
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Testing
+coverage/
+.nyc_output/
+
+# Netlify
+.netlify/
