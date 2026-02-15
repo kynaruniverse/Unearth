@@ -18,221 +18,370 @@
     <title>Unearth - Pattern-Driven Chaos Companion</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="light-mode">
     <div id="app">
-        <!-- Header -->
-        <header class="neo-header">
+        <!-- Animated Background -->
+        <div class="animated-bg">
+            <div class="blob blob-1"></div>
+            <div class="blob blob-2"></div>
+            <div class="blob blob-3"></div>
+        </div>
+
+        <!-- Header with Dark Mode Toggle -->
+        <header class="header-ultimate">
             <div class="header-content">
-                <h1 class="logo-gradient">Unearth<span class="sparkle">✨</span></h1>
-                <div class="header-actions">
-                    <button id="exportBtn" class="neo-icon-btn" aria-label="Export Data">💾</button>
+                <div class="logo-container">
+                    <svg class="logo-icon" viewBox="0 0 24 24" width="32" height="32">
+                        <circle cx="12" cy="12" r="10" fill="url(#logoGradient)"/>
+                        <path d="M12 8 L12 12 L15 15" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+                        <defs>
+                            <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#667eea"/>
+                                <stop offset="100%" stop-color="#764ba2"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <h1 class="logo-text">Unearth</h1>
                 </div>
+                <button id="themeToggle" class="theme-toggle" aria-label="Toggle Dark Mode">
+                    <svg class="sun-icon" viewBox="0 0 24 24" width="20" height="20">
+                        <circle cx="12" cy="12" r="5" fill="currentColor"/>
+                        <line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2"/>
+                        <line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2"/>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2"/>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2"/>
+                        <line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2"/>
+                        <line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2"/>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2"/>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    <svg class="moon-icon" viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor"/>
+                    </svg>
+                </button>
             </div>
         </header>
 
         <!-- Dashboard Screen -->
         <main id="dashboardScreen" class="screen active">
-            <!-- Quick Stats Summary -->
-            <div class="dashboard-hero">
-                <div class="hero-card neo-card">
-                    <div class="hero-icon">🎯</div>
-                    <div class="hero-stats">
-                        <div class="hero-number" id="heroTotalLosses">0</div>
-                        <div class="hero-label">Total Chaos Events</div>
+            <!-- Hero Card with 3D Effect -->
+            <div class="hero-3d">
+                <div class="hero-card-ultimate card-3d">
+                    <div class="card-shine"></div>
+                    <div class="hero-content">
+                        <div class="hero-icon-container">
+                            <svg class="hero-icon" viewBox="0 0 64 64" width="64" height="64">
+                                <circle cx="32" cy="32" r="28" fill="url(#heroGradient)" opacity="0.2"/>
+                                <circle cx="32" cy="32" r="24" fill="url(#heroGradient)"/>
+                                <text x="32" y="40" text-anchor="middle" font-size="24" fill="white">🎯</text>
+                                <defs>
+                                    <linearGradient id="heroGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#667eea"/>
+                                        <stop offset="100%" stop-color="#764ba2"/>
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                        </div>
+                        <div class="hero-stats">
+                            <div class="hero-number gradient-text" id="heroTotalLosses">0</div>
+                            <div class="hero-label">Chaos Events Tracked</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Insight Cards -->
-            <div class="insights-section">
-                <h2 class="section-title">Today's Insights</h2>
-                <div class="insight-card neo-card" id="todayInsight">
-                    <div class="insight-icon">💡</div>
-                    <div class="insight-text">Start tracking to unlock patterns</div>
+            <!-- Smart Insight Card -->
+            <div class="section-container">
+                <h2 class="section-title">
+                    <svg viewBox="0 0 24 24" width="20" height="20" class="section-icon">
+                        <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z" fill="currentColor"/>
+                    </svg>
+                    Today's Insight
+                </h2>
+                <div id="todayInsight" class="insight-card-ultimate card-3d">
+                    <div class="card-shine"></div>
+                    <div class="insight-content">
+                        <div class="insight-icon-ultimate">💡</div>
+                        <div class="insight-text">Start tracking to unlock patterns</div>
+                    </div>
                 </div>
             </div>
 
             <!-- Recent Items -->
-            <div class="recent-section">
+            <div class="section-container">
                 <div class="section-header">
-                    <h2 class="section-title">Your Items</h2>
-                    <button id="addItemQuick" class="neo-btn-small">+ Add</button>
+                    <h2 class="section-title">
+                        <svg viewBox="0 0 24 24" width="20" height="20" class="section-icon">
+                            <rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <line x1="9" y1="3" x2="9" y2="21" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        Your Items
+                    </h2>
+                    <button id="addItemQuick" class="btn-add-quick">
+                        <svg viewBox="0 0 24 24" width="16" height="16">
+                            <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="3"/>
+                            <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="3"/>
+                        </svg>
+                        Add
+                    </button>
                 </div>
-                <div id="dashboardItemsList" class="dashboard-items"></div>
+                <div id="dashboardItemsList" class="dashboard-items-ultimate"></div>
                 
                 <!-- Empty State -->
-                <div id="dashboardEmpty" class="empty-state">
-                    <div class="empty-icon">🔍</div>
+                <div id="dashboardEmpty" class="empty-state-ultimate">
+                    <div class="empty-illustration">
+                        <svg viewBox="0 0 200 200" width="120" height="120">
+                            <circle cx="100" cy="100" r="80" fill="url(#emptyGradient)" opacity="0.2"/>
+                            <circle cx="100" cy="100" r="60" fill="url(#emptyGradient)" opacity="0.4"/>
+                            <text x="100" y="120" text-anchor="middle" font-size="48">🔍</text>
+                            <defs>
+                                <linearGradient id="emptyGradient">
+                                    <stop offset="0%" stop-color="#667eea"/>
+                                    <stop offset="100%" stop-color="#764ba2"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
                     <h3>No items yet</h3>
-                    <p>Tap + Add to start tracking</p>
+                    <p>Tap "Add" to start tracking your chaos</p>
                 </div>
             </div>
         </main>
 
-        <!-- Items List Screen -->
+        <!-- Items Grid Screen -->
         <main id="itemsScreen" class="screen">
-            <div class="screen-top">
+            <div class="screen-header-ultimate">
                 <h2 class="screen-title">All Items</h2>
+                <div class="screen-subtitle" id="itemsCount">0 items</div>
             </div>
 
-            <div id="emptyState" class="empty-state">
-                <div class="empty-icon">🔍</div>
-                <h2>Start tracking</h2>
-                <p>Add items you frequently misplace.</p>
-                <p class="hint">Keys, wallet, phone, glasses...</p>
+            <div id="emptyState" class="empty-state-ultimate" style="display: none;">
+                <div class="empty-illustration">
+                    <svg viewBox="0 0 200 200" width="120" height="120">
+                        <circle cx="100" cy="100" r="80" fill="url(#emptyGradient2)" opacity="0.2"/>
+                        <text x="100" y="120" text-anchor="middle" font-size="48">📦</text>
+                    </svg>
+                </div>
+                <h3>Start tracking</h3>
+                <p>Add items you frequently misplace</p>
             </div>
 
-            <div id="itemsList" class="items-grid hidden"></div>
+            <div id="itemsList" class="items-grid-ultimate hidden"></div>
         </main>
 
         <!-- Stats Screen -->
         <main id="statsScreen" class="screen">
-            <div class="screen-top">
+            <div class="screen-header-ultimate">
                 <h2 class="screen-title">Your Patterns</h2>
+                <div class="screen-subtitle">Discover your chaos</div>
             </div>
 
-            <div class="stats-container">
-                <div class="stats-grid-enhanced">
-                    <div class="stat-card-neo neo-card">
-                        <div class="stat-icon">😅</div>
+            <div class="stats-container-ultimate">
+                <div class="stats-grid-ultimate">
+                    <div class="stat-card-ultimate card-3d">
+                        <div class="card-shine"></div>
+                        <div class="stat-icon-bg">
+                            <span class="stat-icon">😅</span>
+                        </div>
                         <div class="stat-label">Total Losses</div>
                         <div class="stat-value gradient-text" id="totalLosses">0</div>
                     </div>
-                    <div class="stat-card-neo neo-card">
-                        <div class="stat-icon">👑</div>
+                    <div class="stat-card-ultimate card-3d">
+                        <div class="card-shine"></div>
+                        <div class="stat-icon-bg">
+                            <span class="stat-icon">👑</span>
+                        </div>
                         <div class="stat-label">Most Chaotic</div>
                         <div class="stat-value gradient-text" id="mostLostItem">—</div>
                     </div>
-                    <div class="stat-card-neo neo-card">
-                        <div class="stat-icon">📍</div>
+                    <div class="stat-card-ultimate card-3d">
+                        <div class="card-shine"></div>
+                        <div class="stat-icon-bg">
+                            <span class="stat-icon">📍</span>
+                        </div>
                         <div class="stat-label">Top Hiding Spot</div>
                         <div class="stat-value gradient-text" id="topLocation">—</div>
                     </div>
                 </div>
 
-                <div class="badges-section">
-                    <h3 class="section-title">Achievements</h3>
-                    <div class="badges-grid-neo" id="badgesGrid"></div>
+                <!-- Achievements -->
+                <div class="section-container">
+                    <h3 class="section-title">
+                        <svg viewBox="0 0 24 24" width="20" height="20" class="section-icon">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"/>
+                        </svg>
+                        Achievements
+                    </h3>
+                    <div class="badges-grid-ultimate" id="badgesGrid"></div>
                 </div>
             </div>
         </main>
 
         <!-- Item Detail Screen -->
         <main id="itemDetailScreen" class="screen">
-            <div class="detail-header neo-card">
-                <button class="neo-back-btn" id="backFromDetail" aria-label="Back">←</button>
-                <h2 id="itemDetailTitle" class="detail-title gradient-text">Item</h2>
-                <button class="neo-danger-btn" id="deleteItemBtn" aria-label="Delete Item">🗑️</button>
+            <div class="detail-header-ultimate card-3d">
+                <div class="card-shine"></div>
+                <button class="btn-back-ultimate" id="backFromDetail">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" fill="none"/>
+                    </svg>
+                </button>
+                <h2 id="itemDetailTitle" class="detail-title">Item</h2>
+                <button class="btn-delete-ultimate" id="deleteItemBtn">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke="currentColor" stroke-width="2" fill="none"/>
+                    </svg>
+                </button>
             </div>
 
-            <div class="detail-container">
-                <div class="stat-pill-neo neo-card">
+            <div class="detail-container-ultimate">
+                <div class="stat-pill-ultimate card-3d">
+                    <div class="card-shine"></div>
                     <span>Lost <strong id="detailTotalLost" class="gradient-text">0</strong> times</span>
                 </div>
 
-                <div class="predictions-section">
+                <div class="section-container">
                     <h3 class="section-title">Most Likely Here</h3>
-                    <div id="predictionsList" class="predictions-list-neo"></div>
+                    <div id="predictionsList" class="predictions-ultimate"></div>
                 </div>
 
-                <div class="action-buttons">
-                    <button class="btn-lost-neo neo-card" id="lostBtn">
-                        <span class="btn-icon">😰</span>
-                        <span class="btn-text">I LOST IT AGAIN</span>
+                <div class="action-section">
+                    <button class="btn-lost-ultimate card-3d" id="lostBtn">
+                        <div class="card-shine"></div>
+                        <span class="btn-icon-ultimate">😰</span>
+                        <span class="btn-text-ultimate">I LOST IT AGAIN</span>
                     </button>
                 </div>
 
-                <div class="logs-section">
+                <div class="section-container">
                     <h3 class="section-title">Recent History</h3>
-                    <div id="logsList" class="logs-list-neo"></div>
+                    <div id="logsList" class="logs-ultimate"></div>
                 </div>
             </div>
         </main>
 
-        <!-- Bottom Tab Bar -->
-        <nav class="bottom-tabs neo-card">
-            <button class="tab-btn active" data-screen="dashboard">
-                <span class="tab-icon">🏠</span>
-                <span class="tab-label">Home</span>
-            </button>
-            <button class="tab-btn" data-screen="items">
-                <span class="tab-icon">📦</span>
-                <span class="tab-label">Items</span>
-            </button>
-            <button class="tab-btn tab-add" id="tabAddBtn">
-                <span class="tab-icon-large">+</span>
-            </button>
-            <button class="tab-btn" data-screen="stats">
-                <span class="tab-icon">📊</span>
-                <span class="tab-label">Stats</span>
-            </button>
-            <button class="tab-btn" id="moreBtn">
-                <span class="tab-icon">⚡</span>
-                <span class="tab-label">More</span>
-            </button>
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav-ultimate">
+            <div class="nav-bg"></div>
+            <div class="nav-content">
+                <button class="nav-btn active" data-screen="dashboard">
+                    <div class="nav-btn-ripple"></div>
+                    <svg class="nav-icon" viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" fill="none" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    <span class="nav-label">Home</span>
+                </button>
+                <button class="nav-btn" data-screen="items">
+                    <div class="nav-btn-ripple"></div>
+                    <svg class="nav-icon" viewBox="0 0 24 24" width="24" height="24">
+                        <rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor"/>
+                        <rect x="14" y="3" width="7" height="7" rx="1" fill="currentColor"/>
+                        <rect x="14" y="14" width="7" height="7" rx="1" fill="currentColor"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1" fill="currentColor"/>
+                    </svg>
+                    <span class="nav-label">Items</span>
+                </button>
+                <button class="nav-btn nav-btn-add" id="tabAddBtn">
+                    <div class="add-btn-glow"></div>
+                    <svg class="nav-icon-add" viewBox="0 0 24 24" width="28" height="28">
+                        <line x1="12" y1="5" x2="12" y2="19" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="5" y1="12" x2="19" y2="12" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <button class="nav-btn" data-screen="stats">
+                    <div class="nav-btn-ripple"></div>
+                    <svg class="nav-icon" viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M18 20V10M12 20V4M6 20v-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span class="nav-label">Stats</span>
+                </button>
+                <button class="nav-btn" id="moreBtn">
+                    <div class="nav-btn-ripple"></div>
+                    <svg class="nav-icon" viewBox="0 0 24 24" width="24" height="24">
+                        <circle cx="12" cy="12" r="1" fill="currentColor"/>
+                        <circle cx="12" cy="5" r="1" fill="currentColor"/>
+                        <circle cx="12" cy="19" r="1" fill="currentColor"/>
+                    </svg>
+                    <span class="nav-label">More</span>
+                </button>
+            </div>
         </nav>
 
-        <!-- Add Item Modal -->
+        <!-- Modals -->
         <div id="addItemModal" class="modal-overlay hidden">
-            <div class="modal-neo neo-card">
-                <h3 class="modal-title gradient-text">Track New Item</h3>
-                <input type="text" id="itemNameInput" class="neo-input" placeholder="What did you lose?" maxlength="30" autocomplete="off">
+            <div class="modal-ultimate card-3d">
+                <div class="card-shine"></div>
+                <h3 class="modal-title">Track New Item</h3>
+                <input type="text" id="itemNameInput" class="input-ultimate" placeholder="What did you lose?" maxlength="30" autocomplete="off">
                 <div class="modal-actions">
-                    <button id="cancelAddBtn" class="btn-secondary-neo">Cancel</button>
-                    <button id="saveItemBtn" class="btn-primary-neo">Start Tracking</button>
+                    <button id="cancelAddBtn" class="btn-secondary-ultimate">Cancel</button>
+                    <button id="saveItemBtn" class="btn-primary-ultimate">Start Tracking</button>
                 </div>
             </div>
         </div>
 
-        <!-- Found Location Modal -->
         <div id="foundModal" class="modal-overlay hidden">
-            <div class="modal-neo neo-card">
-                <h3 class="modal-title gradient-text">Found it! 🎉</h3>
+            <div class="modal-ultimate card-3d">
+                <div class="card-shine"></div>
+                <h3 class="modal-title">Found it! 🎉</h3>
                 <p class="modal-desc">Where was it hiding?</p>
-                <input type="text" id="locationInput" class="neo-input" placeholder="e.g. Under the couch" maxlength="30" autocomplete="off">
+                <input type="text" id="locationInput" class="input-ultimate" placeholder="e.g. Under the couch" maxlength="30" autocomplete="off">
                 <div class="modal-actions">
-                    <button id="cancelFoundBtn" class="btn-secondary-neo">Cancel</button>
-                    <button id="saveFoundBtn" class="btn-primary-neo">Save Pattern</button>
+                    <button id="cancelFoundBtn" class="btn-secondary-ultimate">Cancel</button>
+                    <button id="saveFoundBtn" class="btn-primary-ultimate">Save Pattern</button>
                 </div>
             </div>
         </div>
 
-        <!-- Delete Confirmation Modal -->
         <div id="deleteModal" class="modal-overlay hidden">
-            <div class="modal-neo neo-card">
-                <h3 class="modal-title gradient-text">Erase Data?</h3>
+            <div class="modal-ultimate card-3d">
+                <div class="card-shine"></div>
+                <h3 class="modal-title">Erase Data?</h3>
                 <p class="warning-text">This will delete all logs for this item.</p>
                 <div class="modal-actions">
-                    <button id="cancelDeleteBtn" class="btn-secondary-neo">Cancel</button>
-                    <button id="confirmDeleteBtn" class="btn-danger-neo">Delete Forever</button>
+                    <button id="cancelDeleteBtn" class="btn-secondary-ultimate">Cancel</button>
+                    <button id="confirmDeleteBtn" class="btn-danger-ultimate">Delete Forever</button>
                 </div>
             </div>
         </div>
 
-        <!-- More Menu Modal -->
         <div id="moreModal" class="modal-overlay hidden">
-            <div class="modal-neo neo-card">
-                <h3 class="modal-title gradient-text">More Options</h3>
-                <div class="menu-options">
-                    <button class="menu-option neo-card" id="exportDataBtn">
-                        <span class="menu-icon">💾</span>
-                        <span class="menu-label">Export Data</span>
+            <div class="modal-ultimate card-3d">
+                <div class="card-shine"></div>
+                <h3 class="modal-title">More Options</h3>
+                <div class="menu-options-ultimate">
+                    <button class="menu-option-ultimate card-3d" id="exportDataBtn">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="currentColor" stroke-width="2" fill="none"/>
+                        </svg>
+                        <span>Export Data</span>
                     </button>
-                    <button class="menu-option neo-card" id="clearAllBtn">
-                        <span class="menu-icon">🗑️</span>
-                        <span class="menu-label">Clear All Data</span>
+                    <button class="menu-option-ultimate card-3d" id="clearAllBtn">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke="currentColor" stroke-width="2" fill="none"/>
+                        </svg>
+                        <span>Clear All Data</span>
                     </button>
-                    <button class="menu-option neo-card" id="aboutBtn">
-                        <span class="menu-icon">ℹ️</span>
-                        <span class="menu-label">About</span>
+                    <button class="menu-option-ultimate card-3d" id="aboutBtn">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                            <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <span>About</span>
                     </button>
                 </div>
-                <button id="closeMoreBtn" class="btn-secondary-neo full-width">Close</button>
+                <button id="closeMoreBtn" class="btn-secondary-ultimate full-width">Close</button>
             </div>
         </div>
 
-        <!-- Toast Notification -->
-        <div id="toast" class="toast-neo neo-card hidden"></div>
+        <!-- Toast -->
+        <div id="toast" class="toast-ultimate card-3d hidden">
+            <div class="card-shine"></div>
+            <span id="toastText"></span>
+        </div>
+
+        <!-- Confetti Container -->
+        <div id="confettiContainer" class="confetti-container"></div>
     </div>
 
     <script src="app.js"></script>
