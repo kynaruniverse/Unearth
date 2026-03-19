@@ -1,23 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import useItemStore from '../../stores/itemStore';
 import useProgressStore from '../../stores/progressStore';
 import { XP_REWARDS } from '../../utils/gamification';
+import XPBurst from './XPBurst';
 
 export default function LogItemSheet({ type, onClose }) {
-  const [step, setStep] = useState(1); // 1: select item, 2: select place
+  const [step, setStep] = useState(1);
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [newItemName, setNewItemName] = useState('');
   const [newPlaceName, setNewPlaceName] = useState('');
   const [showNewItemInput, setShowNewItemInput] = useState(false);
   const [showNewPlaceInput, setShowNewPlaceInput] = useState(false);
+  const [showXp, setShowXp] = useState(false);
+  const [xpAmount, setXpAmount] = useState(0);
 
   const { items, places, addItem, addPlace, addLog } = useItemStore();
   const { addXP, incrementDailyChallenge, updateStreak } = useProgressStore();
 
-  // Recent items (last 5 used) – could be derived from logs
-  const recentItems = items.slice(0, 5); // placeholder
-
+  const recentItems = items.slice(0, 5);
   const recentPlaces = places.slice(0, 5);
 
   const handleSelectItem = (item) => {
@@ -27,20 +28,23 @@ export default function LogItemSheet({ type, onClose }) {
 
   const handleSelectPlace = async (place) => {
     setSelectedPlace(place);
-    // Save log
     await addLog({
       itemId: selectedItem.id,
       placeId: place.id,
       type: type,
     });
-    // Update gamification
-    const xpAmount = type === 'stored' ? XP_REWARDS.STORE_ITEM : XP_REWARDS.FIND_ITEM;
-    await addXP(xpAmount, `${type} item`);
+
+    const xpEarned = type === 'stored' ? XP_REWARDS.STORE_ITEM : XP_REWARDS.FIND_ITEM;
+    await addXP(xpEarned, `${type} item`);
     await updateStreak();
     await incrementDailyChallenge();
-    // Close sheet
-    onClose();
-    // Optionally show XP burst
+
+    setXpAmount(xpEarned);
+    setShowXp(true);
+    setTimeout(() => {
+      setShowXp(false);
+      onClose();
+    }, 1000);
   };
 
   const handleCreateNewItem = async () => {
@@ -56,19 +60,24 @@ export default function LogItemSheet({ type, onClose }) {
     if (!newPlaceName.trim()) return;
     const newPlace = await addPlace({ name: newPlaceName, emoji: '📍' });
     setSelectedPlace(newPlace);
-    setShowNewPlaceInput(false);
-    setNewPlaceName('');
-    // Save log with new place
+
     await addLog({
       itemId: selectedItem.id,
       placeId: newPlace.id,
       type: type,
     });
-    const xpAmount = type === 'stored' ? XP_REWARDS.STORE_ITEM : XP_REWARDS.FIND_ITEM;
-    await addXP(xpAmount, `${type} item`);
+
+    const xpEarned = type === 'stored' ? XP_REWARDS.STORE_ITEM : XP_REWARDS.FIND_ITEM;
+    await addXP(xpEarned, `${type} item`);
     await updateStreak();
     await incrementDailyChallenge();
-    onClose();
+
+    setXpAmount(xpEarned);
+    setShowXp(true);
+    setTimeout(() => {
+      setShowXp(false);
+      onClose();
+    }, 1000);
   };
 
   return (
@@ -185,6 +194,7 @@ export default function LogItemSheet({ type, onClose }) {
           </>
         )}
       </div>
+      {showXp && <XPBurst amount={xpAmount} onComplete={() => setShowXp(false)} />}
     </div>
   );
 }

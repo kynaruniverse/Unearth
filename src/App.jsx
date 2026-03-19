@@ -6,6 +6,7 @@ import ItemDetail from './pages/ItemDetail';
 import Places from './pages/Places';
 import Progress from './pages/Progress';
 import Settings from './pages/Settings';
+import NotFound from './pages/NotFound';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="/places" element={<Places />} />
           <Route path="/progress" element={<Progress />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Layout>
     </BrowserRouter>
